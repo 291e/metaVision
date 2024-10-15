@@ -1,0 +1,7 @@
+{
+  "/page": "app/page.js",
+  "/(tabs)/meta360/page": "app/(tabs)/meta360/page.js",
+  "/(tabs)/solution/page": "app/(tabs)/solution/page.js",
+  "/(tabs)/pricing/page": "app/(tabs)/pricing/page.js",
+  "/(tabs)/help/page": "app/(tabs)/help/page.js"
+}

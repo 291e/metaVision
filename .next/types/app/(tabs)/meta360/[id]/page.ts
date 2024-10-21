@@ -1,4 +1,4 @@
-// File: /Users/metabank/Documents/GitHub/metaVision/app/(tabs)/meta360/[id]/page.tsx
+// File: C:\Users\291\Documents\GitHub\metaVision\app\(tabs)\meta360\[id]\page.tsx
 import * as entry from '../../../../../../app/(tabs)/meta360/[id]/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

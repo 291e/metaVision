@@ -13,12 +13,12 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  */
 const documents = {
-    "\n\tmutation uploadProduct($original_photo: [String], $title: String!) {\n\t\tuploadProduct(original_photo: $original_photo, title: $title) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n": types.UploadProductDocument,
-    "\n\tmutation deleteProduct($id: String!) {\n\t\tdeleteProduct(id: $id) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n": types.DeleteProductDocument,
-    "\n\tmutation editProduct($id: String!, $title: String!) {\n\t\teditProduct(id: $id, title: $title) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n": types.EditProductDocument,
-    "\n\tquery allProduct($offset: Int!) {\n\t\tallProduct(offset: $offset) {\n\t\t\tid\n\t\t\ttitle\n\t\t\toriginal_photo\n\t\t\tresult_texture\n\t\t\tresult_mtl\n\t\t\tresult_obj\n\t\t\tresult_usda\n\t\t\tcreatedAt\n\t\t\tupdatedAt\n\t\t}\n\t}\n": types.AllProductDocument,
-    "\n\tquery getMyProduct($offset: Int!) {\n\t\tgetMyProduct(offset: $offset) {\n\t\t\tid\n\t\t\ttitle\n\t\t\toriginal_photo\n\t\t\tresult_texture\n\t\t\tresult_mtl\n\t\t\tresult_obj\n\t\t\tresult_usda\n\t\t\tcreatedAt\n\t\t\tupdatedAt\n\t\t}\n\t}\n": types.GetMyProductDocument,
-    "\n\tquery productDetail($id: String!) {\n\t\tproductDetail(id: $id) {\n\t\t\tid\n\t\t\ttitle\n\t\t\toriginal_photo\n\t\t\tresult_ao\n\t\t\tresult_disp\n\t\t\tresult_normal\n\t\t\tresult_roughness\n\t\t\tresult_texture\n\t\t\tresult_mtl\n\t\t\tresult_obj\n\t\t\tresult_usda\n\t\t\tcreatedAt\n\t\t\tupdatedAt\n\t\t}\n\t}\n": types.ProductDetailDocument,
+    "\n  mutation uploadProduct($original_photo: [String], $title: String!) {\n    uploadProduct(original_photo: $original_photo, title: $title) {\n      success\n      message\n    }\n  }\n": types.UploadProductDocument,
+    "\n  mutation deleteProduct($id: String!) {\n    deleteProduct(id: $id) {\n      success\n      message\n    }\n  }\n": types.DeleteProductDocument,
+    "\n  mutation editProduct($id: String!, $title: String!) {\n    editProduct(id: $id, title: $title) {\n      success\n      message\n    }\n  }\n": types.EditProductDocument,
+    "\n  query allProduct($offset: Int!) {\n    allProduct(offset: $offset) {\n      id\n      title\n      original_photo\n      result_texture\n      result_mtl\n      result_obj\n      result_usda\n      result_gltf\n      createdAt\n      updatedAt\n    }\n  }\n": types.AllProductDocument,
+    "\n  query getMyProduct($offset: Int!) {\n    getMyProduct(offset: $offset) {\n      id\n      title\n      original_photo\n      result_texture\n      result_mtl\n      result_obj\n      result_usda\n      result_gltf\n      createdAt\n      updatedAt\n    }\n  }\n": types.GetMyProductDocument,
+    "\n  query productDetail($id: String!) {\n    productDetail(id: $id) {\n      id\n      title\n      original_photo\n      result_ao\n      result_disp\n      result_normal\n      result_roughness\n      result_texture\n      result_mtl\n      result_obj\n      result_usda\n      result_gltf\n      createdAt\n      updatedAt\n    }\n  }\n": types.ProductDetailDocument,
     "\n\tmutation createAccount($email: String!, $password: String!) {\n\t\tcreateAccount(email: $email, password: $password) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n": types.CreateAccountDocument,
     "\n\tmutation login($email: String!, $password: String!) {\n\t\tlogin(email: $email, password: $password) {\n\t\t\tsuccess\n\t\t\ttoken\n\t\t\tmessage\n\t\t}\n\t}\n": types.LoginDocument,
     "\n\tmutation editProfile($password: String) {\n\t\teditProfile(password: $password) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n": types.EditProfileDocument,
@@ -44,27 +44,27 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n\tmutation uploadProduct($original_photo: [String], $title: String!) {\n\t\tuploadProduct(original_photo: $original_photo, title: $title) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n"): (typeof documents)["\n\tmutation uploadProduct($original_photo: [String], $title: String!) {\n\t\tuploadProduct(original_photo: $original_photo, title: $title) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n"];
+export function graphql(source: "\n  mutation uploadProduct($original_photo: [String], $title: String!) {\n    uploadProduct(original_photo: $original_photo, title: $title) {\n      success\n      message\n    }\n  }\n"): (typeof documents)["\n  mutation uploadProduct($original_photo: [String], $title: String!) {\n    uploadProduct(original_photo: $original_photo, title: $title) {\n      success\n      message\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n\tmutation deleteProduct($id: String!) {\n\t\tdeleteProduct(id: $id) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n"): (typeof documents)["\n\tmutation deleteProduct($id: String!) {\n\t\tdeleteProduct(id: $id) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n"];
+export function graphql(source: "\n  mutation deleteProduct($id: String!) {\n    deleteProduct(id: $id) {\n      success\n      message\n    }\n  }\n"): (typeof documents)["\n  mutation deleteProduct($id: String!) {\n    deleteProduct(id: $id) {\n      success\n      message\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n\tmutation editProduct($id: String!, $title: String!) {\n\t\teditProduct(id: $id, title: $title) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n"): (typeof documents)["\n\tmutation editProduct($id: String!, $title: String!) {\n\t\teditProduct(id: $id, title: $title) {\n\t\t\tsuccess\n\t\t\tmessage\n\t\t}\n\t}\n"];
+export function graphql(source: "\n  mutation editProduct($id: String!, $title: String!) {\n    editProduct(id: $id, title: $title) {\n      success\n      message\n    }\n  }\n"): (typeof documents)["\n  mutation editProduct($id: String!, $title: String!) {\n    editProduct(id: $id, title: $title) {\n      success\n      message\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n\tquery allProduct($offset: Int!) {\n\t\tallProduct(offset: $offset) {\n\t\t\tid\n\t\t\ttitle\n\t\t\toriginal_photo\n\t\t\tresult_texture\n\t\t\tresult_mtl\n\t\t\tresult_obj\n\t\t\tresult_usda\n\t\t\tcreatedAt\n\t\t\tupdatedAt\n\t\t}\n\t}\n"): (typeof documents)["\n\tquery allProduct($offset: Int!) {\n\t\tallProduct(offset: $offset) {\n\t\t\tid\n\t\t\ttitle\n\t\t\toriginal_photo\n\t\t\tresult_texture\n\t\t\tresult_mtl\n\t\t\tresult_obj\n\t\t\tresult_usda\n\t\t\tcreatedAt\n\t\t\tupdatedAt\n\t\t}\n\t}\n"];
+export function graphql(source: "\n  query allProduct($offset: Int!) {\n    allProduct(offset: $offset) {\n      id\n      title\n      original_photo\n      result_texture\n      result_mtl\n      result_obj\n      result_usda\n      result_gltf\n      createdAt\n      updatedAt\n    }\n  }\n"): (typeof documents)["\n  query allProduct($offset: Int!) {\n    allProduct(offset: $offset) {\n      id\n      title\n      original_photo\n      result_texture\n      result_mtl\n      result_obj\n      result_usda\n      result_gltf\n      createdAt\n      updatedAt\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n\tquery getMyProduct($offset: Int!) {\n\t\tgetMyProduct(offset: $offset) {\n\t\t\tid\n\t\t\ttitle\n\t\t\toriginal_photo\n\t\t\tresult_texture\n\t\t\tresult_mtl\n\t\t\tresult_obj\n\t\t\tresult_usda\n\t\t\tcreatedAt\n\t\t\tupdatedAt\n\t\t}\n\t}\n"): (typeof documents)["\n\tquery getMyProduct($offset: Int!) {\n\t\tgetMyProduct(offset: $offset) {\n\t\t\tid\n\t\t\ttitle\n\t\t\toriginal_photo\n\t\t\tresult_texture\n\t\t\tresult_mtl\n\t\t\tresult_obj\n\t\t\tresult_usda\n\t\t\tcreatedAt\n\t\t\tupdatedAt\n\t\t}\n\t}\n"];
+export function graphql(source: "\n  query getMyProduct($offset: Int!) {\n    getMyProduct(offset: $offset) {\n      id\n      title\n      original_photo\n      result_texture\n      result_mtl\n      result_obj\n      result_usda\n      result_gltf\n      createdAt\n      updatedAt\n    }\n  }\n"): (typeof documents)["\n  query getMyProduct($offset: Int!) {\n    getMyProduct(offset: $offset) {\n      id\n      title\n      original_photo\n      result_texture\n      result_mtl\n      result_obj\n      result_usda\n      result_gltf\n      createdAt\n      updatedAt\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n\tquery productDetail($id: String!) {\n\t\tproductDetail(id: $id) {\n\t\t\tid\n\t\t\ttitle\n\t\t\toriginal_photo\n\t\t\tresult_ao\n\t\t\tresult_disp\n\t\t\tresult_normal\n\t\t\tresult_roughness\n\t\t\tresult_texture\n\t\t\tresult_mtl\n\t\t\tresult_obj\n\t\t\tresult_usda\n\t\t\tcreatedAt\n\t\t\tupdatedAt\n\t\t}\n\t}\n"): (typeof documents)["\n\tquery productDetail($id: String!) {\n\t\tproductDetail(id: $id) {\n\t\t\tid\n\t\t\ttitle\n\t\t\toriginal_photo\n\t\t\tresult_ao\n\t\t\tresult_disp\n\t\t\tresult_normal\n\t\t\tresult_roughness\n\t\t\tresult_texture\n\t\t\tresult_mtl\n\t\t\tresult_obj\n\t\t\tresult_usda\n\t\t\tcreatedAt\n\t\t\tupdatedAt\n\t\t}\n\t}\n"];
+export function graphql(source: "\n  query productDetail($id: String!) {\n    productDetail(id: $id) {\n      id\n      title\n      original_photo\n      result_ao\n      result_disp\n      result_normal\n      result_roughness\n      result_texture\n      result_mtl\n      result_obj\n      result_usda\n      result_gltf\n      createdAt\n      updatedAt\n    }\n  }\n"): (typeof documents)["\n  query productDetail($id: String!) {\n    productDetail(id: $id) {\n      id\n      title\n      original_photo\n      result_ao\n      result_disp\n      result_normal\n      result_roughness\n      result_texture\n      result_mtl\n      result_obj\n      result_usda\n      result_gltf\n      createdAt\n      updatedAt\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

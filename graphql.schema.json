@@ -649,6 +649,18 @@
             "deprecationReason": null
           },
           {
+            "name": "result_gltf",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "result_mtl",
             "description": null,
             "args": [],

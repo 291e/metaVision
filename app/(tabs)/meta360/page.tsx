@@ -155,7 +155,7 @@ export default function Product() {
     <div className="relative h-full">
       {/* 배너 */}
       <div className="flex justify-center">
-        <Image src={banner} alt="Banner" width={0} height={0} />
+        <Image src={banner} alt="Banner" width={0} height={0} priority={true} />
       </div>
 
       {/* 삭제 확인 모달 */}
@@ -200,7 +200,7 @@ export default function Product() {
                 <button
                   onClick={() => handleDeleteClick(product.id)}
                   className="absolute top-2 right-2 z-10 w-10 h-10 bg-meta rounded-md flex justify-center items-center"
-                  aria-label={`Delete ${product.title}`}
+                  aria-label={`Delete ${product.title.substring(0, 10)}`}
                 >
                   <TrashIcon className="w-7 h-7 max-lg:w-5 max-lg:h-5 text-white" />
                 </button>
@@ -213,17 +213,19 @@ export default function Product() {
                   product.original_photo.length > 0 &&
                   product.original_photo[0] && (
                     <Image
-                      className="object-cover"
+                      className="object-cover h-full"
                       width={360} // 1080 / 3
                       height={640} // 1920 / 3
                       src={product.original_photo[0]}
-                      alt={product.title}
-                      priority
+                      alt={product.title.substring(0, 10)}
+                      priority={true}
                     />
                   )}
               </Link>
               <div className="flex justify-center text-neutral-800">
-                <span className="text-lg">{product.title}</span>
+                <span className="text-lg">
+                  {product.title.substring(0, 10)}
+                </span>
               </div>
             </div>
           ))

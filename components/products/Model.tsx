@@ -38,7 +38,7 @@ const Model: React.FC<ModelProps> = ({ objUrl, textureUrls }) => {
         const objText = await response.text();
         const objLoader = new OBJLoader();
         const object = objLoader.parse(objText);
-        object.scale.set(5, 5, 5);
+        object.scale.set(30, 30, 30); // 모델 크기를 조정하여 확대
 
         // 텍스처 로드
         const textureLoader = new THREE.TextureLoader();
@@ -75,12 +75,13 @@ const Model: React.FC<ModelProps> = ({ objUrl, textureUrls }) => {
           ]);
 
         // 재질 생성
-        const material = new THREE.MeshStandardMaterial({
-          map: diffuseTexture || undefined,
-          aoMap: aoTexture || undefined,
-          normalMap: normalTexture || undefined,
-          roughnessMap: roughnessTexture || undefined,
-        });
+        const materialParams: THREE.MeshStandardMaterialParameters = {};
+        if (diffuseTexture) materialParams.map = diffuseTexture;
+        if (aoTexture) materialParams.aoMap = aoTexture;
+        if (normalTexture) materialParams.normalMap = normalTexture;
+        if (roughnessTexture) materialParams.roughnessMap = roughnessTexture;
+
+        const material = new THREE.MeshStandardMaterial(materialParams);
 
         // 오브젝트에 재질 적용
         object.traverse((child) => {

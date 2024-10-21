@@ -112,12 +112,12 @@ export default function ProductDetail({ params }: { params: { id: string } }) {
               </div>
             ) : (
               <>
-                <span className="text-xl">{productDetail.title}</span>
+                <span className="text-xl">{productDetail.id}</span>
                 <h1>{productDetail.title.substring(0, 10)}</h1>
               </>
             )}
           </div>
-          <div className="flex h-screen">
+          <div className="flex h-screen max-h-[768px] px-40">
             <Canvas
               camera={{ position: [0, 0, 20] }}
               style={{ width: "100%", height: "100%" }}
@@ -146,6 +146,14 @@ export default function ProductDetail({ params }: { params: { id: string } }) {
       ) : (
         <p>상품 데이터를 불러오지 못했습니다.</p>
       )}
+
+      <div className="flex justify-center">
+        <div id="toggle" className="relative inline-block w-16 h-8">
+          <input type="checkbox" id="toggle-input" className="sr-only" />
+          <div className="block bg-gray-400 w-full h-full rounded-full"></div>
+          <div className="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform"></div>
+        </div>
+      </div>
     </div>
   );
 }

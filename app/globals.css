@@ -3,18 +3,18 @@
 @tailwind utilities;
 
 @layer base {
-	@layer components {
-		.btn-meta {
-			@apply hover:bg-white hover:text-meta w-full bg-meta text-white  font-medium rounded-md text-center border-0 transition-colors;
-		}
-		.input-meta {
-			@apply bg-transparent rounded-md w-full h-10 focus:outline-none ring-1 focus:ring-4 transition ring-meta focus:ring-meta border-none placeholder:text-neutral-300;
-		}
-	}
+  @layer components {
+    .btn-meta {
+      @apply hover:bg-white hover:text-meta w-full bg-meta text-white  font-medium rounded-md text-center border-0 transition-colors;
+    }
+    .input-meta {
+      @apply bg-transparent rounded-md w-full h-10 focus:outline-none ring-1 focus:ring-4 transition ring-meta focus:ring-meta border-none placeholder:text-neutral-300;
+    }
+  }
 }
 .swiper-pagination-bullet-active {
-	@apply ring-2 ring-meta bg-meta ring-offset-2;
+  @apply ring-2 ring-meta bg-meta ring-offset-2;
 }
 .swiper-pagination-bullet {
-	@apply bg-meta;
+  @apply bg-meta;
 }

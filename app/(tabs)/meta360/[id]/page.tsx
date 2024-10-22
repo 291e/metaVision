@@ -1,5 +1,4 @@
 "use client";
-
 import { EDIT_PRODUCT_MUTATION } from "@/app/api/product/mutation";
 import { PRODUCT_DETAIL_QUERY } from "@/app/api/product/query";
 import {
@@ -11,12 +10,11 @@ import {
 import useUser from "@/app/hooks/useUser";
 import { useMutation, useQuery } from "@apollo/client";
 import { UserIcon } from "@heroicons/react/24/solid";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import * as THREE from "three";
-import { OBJLoader } from "three-stdlib";
 import Model from "@/components/products/Model";
+import { useControls, folder, Leva } from "leva";
 
 export default function ProductDetail({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -55,6 +53,50 @@ export default function ProductDetail({ params }: { params: { id: string } }) {
   });
 
   const productDetail = data?.productDetail;
+
+  // Leva 컨트롤 추가
+  const {
+    ambientLightIntensity,
+    directionalLightIntensity,
+    pointLightIntensity,
+    showAmbientLight,
+    showDirectionalLight,
+    showPointLight,
+    ambientLightColor,
+    directionalLightColor,
+    pointLightColor,
+    directionalLightPosition,
+    pointLightPosition,
+  } = useControls({
+    Lighting: folder({
+      // 조명 활성화 여부
+      showAmbientLight: { value: true, label: "Show Ambient Light" },
+      showDirectionalLight: { value: true, label: "Show Directional Light" },
+      showPointLight: { value: true, label: "Show Point Light" },
+      // 조명 강도
+      ambientLightIntensity: { value: 3, min: 0, max: 10, step: 0.1 },
+      directionalLightIntensity: { value: 1.5, min: 0, max: 10, step: 0.1 },
+      pointLightIntensity: { value: 50, min: 0, max: 100, step: 1 },
+      // 조명 색상
+      ambientLightColor: { value: "#ffffff", label: "Ambient Light Color" },
+      directionalLightColor: {
+        value: "#ffffff",
+        label: "Directional Light Color",
+      },
+      pointLightColor: { value: "#ffffff", label: "Point Light Color" },
+      // 조명 위치
+      directionalLightPosition: {
+        value: { x: 0, y: 0, z: 0 },
+        step: 0.1,
+        label: "Directional Light Position",
+      },
+      pointLightPosition: {
+        value: { x: 0, y: 5, z: 0 },
+        step: 0.1,
+        label: "Point Light Position",
+      },
+    }),
+  });
 
   if (loading) return <h1>로딩 중...</h1>;
   if (error) {
@@ -122,8 +164,34 @@ export default function ProductDetail({ params }: { params: { id: string } }) {
               camera={{ position: [0, 0, 20] }}
               style={{ width: "100%", height: "100%" }}
             >
-              <ambientLight intensity={2} />
-              <directionalLight position={[5, 5, 5]} intensity={1.5} />
+              {showAmbientLight && (
+                <ambientLight
+                  intensity={ambientLightIntensity}
+                  color={ambientLightColor}
+                />
+              )}
+              {showDirectionalLight && (
+                <directionalLight
+                  position={[
+                    directionalLightPosition.x,
+                    directionalLightPosition.y,
+                    directionalLightPosition.z,
+                  ]}
+                  intensity={directionalLightIntensity}
+                  color={directionalLightColor}
+                />
+              )}
+              {showPointLight && (
+                <pointLight
+                  position={[
+                    pointLightPosition.x,
+                    pointLightPosition.y,
+                    pointLightPosition.z,
+                  ]}
+                  intensity={pointLightIntensity}
+                  color={pointLightColor}
+                />
+              )}
               <Model
                 objUrl={productDetail.result_obj || ""}
                 textureUrls={{
@@ -142,18 +210,12 @@ export default function ProductDetail({ params }: { params: { id: string } }) {
               />
             </Canvas>
           </div>
+          {/* Leva 패널 추가 */}
+          <Leva collapsed={false} oneLineLabels={true} />
         </>
       ) : (
         <p>상품 데이터를 불러오지 못했습니다.</p>
       )}
-
-      <div className="flex justify-center">
-        <div id="toggle" className="relative inline-block w-16 h-8">
-          <input type="checkbox" id="toggle-input" className="sr-only" />
-          <div className="block bg-gray-400 w-full h-full rounded-full"></div>
-          <div className="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform"></div>
-        </div>
-      </div>
     </div>
   );
 }

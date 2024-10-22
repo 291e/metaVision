@@ -34,6 +34,7 @@
     "classnames": "^2.5.1",
     "dotenv": "^16.4.5",
     "graphql": "^16.9.0",
+    "leva": "^0.9.35",
     "next": "14.2.4",
     "nookies": "^2.5.2",
     "react": "^18",

@@ -135,7 +135,7 @@ const Home: React.FC = () => {
                 </span>
               ))}
             </div>
-            <button className="bg-meta text-white p-2 rounded-lg lg:block hidden">
+            <button className="bg-meta hover:bg-blue-600 text-white p-2 rounded-lg lg:block hidden">
               지금 바로 시작하기
             </button>
           </div>
@@ -170,12 +170,15 @@ const Home: React.FC = () => {
               <span>장소 및 여행</span>
               <span>캐릭터 및 생물</span>
               <span>예술</span>
-              <button className="text-meta w-full shadow-md col-span-3">
+              <Link
+                href="/meta360"
+                className="text-meta w-full shadow-md col-span-3"
+              >
                 <div className="flex gap-4 items-center">
                   <p>모델 둘러보기</p>
                   <ArrowRightCircleIcon className="size-5" />
                 </div>
-              </button>
+              </Link>
             </div>
           </div>
         </div>

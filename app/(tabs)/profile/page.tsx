@@ -2,8 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useReactiveVar } from "@apollo/client";
-import { isLoggedInVar } from "@/lib/apolloClient";
+import { useSelector } from "react-redux";
 import useUser from "@/app/hooks/useUser";
 import LogoutButton from "@/components/shared/LogoutButton";
 import {
@@ -13,10 +12,11 @@ import {
   ShieldCheckIcon,
   EnvelopeIcon,
 } from "@heroicons/react/24/solid";
+import { RootState } from "@/app/store/store";
 
 export default function Profile() {
   const router = useRouter();
-  const isLoggedIn = useReactiveVar(isLoggedInVar);
+  const isLoggedIn = useSelector((state: RootState) => state.login.isLoggedIn); // Redux에서 로그인 상태 가져오기
   const { data, loading, error } = useUser();
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function Profile() {
         <div className="flex flex-col items-center">
           <UserCircleIcon className="w-24 h-24 text-meta mb-4" />
           <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-            {user.company_name}
+            {user.email}
           </h2>
           <p className="text-gray-600">ID: {user.id}</p>
         </div>
@@ -66,16 +66,7 @@ export default function Profile() {
               {user.email ? user.email : "이메일이 존재하지 않습니다."}
             </span>
           </div>
-          <div className="flex items-center mb-4">
-            <PhoneIcon className="w-5 h-5 text-meta mr-3" />
-            <span className="text-gray-700">{user.phone}</span>
-          </div>
-          <div className="flex items-center mb-4">
-            <BuildingOfficeIcon className="w-5 h-5 text-meta mr-3" />
-            <span className="text-gray-700">
-              회사 이름: {user.company_name}
-            </span>
-          </div>
+
           <div className="flex items-center mb-4">
             <ShieldCheckIcon className="w-5 h-5 text-meta mr-3" />
             <span

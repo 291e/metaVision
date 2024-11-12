@@ -1,7 +1,7 @@
 "use client";
 
 import type { Product } from "@/app/gql/graphql";
-import { useMutation, useQuery, useReactiveVar } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -18,7 +18,8 @@ import {
   AllProductQueryVariables,
 } from "@/app/gql/graphql";
 import banner from "@/public/blue.png";
-import { isLoggedInVar } from "@/lib/apolloClient";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store/store";
 
 export default function Product() {
   const router = useRouter();
@@ -31,26 +32,29 @@ export default function Product() {
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(initialPage);
   const [isLastPage, setIsLastPage] = useState(false);
-
-  // 삭제 확인 모달 상태 관리
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(
     null
   );
 
-  // 상품 목록 컨테이너의 참조 생성
   const productListRef = useRef<HTMLDivElement>(null);
 
-  // 사용자 정보 가져오기
+  const isLoggedIn = useSelector((state: RootState) => state.login.isLoggedIn);
+
   const {
     data: userData,
     loading: userLoading,
     error: userError,
   } = useQuery<GetMyInfoQuery>(GET_MY_QUERY);
 
-  const isLoggedIn = useReactiveVar(isLoggedInVar);
+  const { data, loading, error, refetch } = useQuery<
+    AllProductQuery,
+    AllProductQueryVariables
+  >(ALL_PRODUCT_QUERY, {
+    variables: { offset: (page - 1) * 16 },
+    fetchPolicy: "cache-and-network",
+  });
 
-  // 상품 삭제 뮤테이션
   const [deleteProductMutation] = useMutation<
     DeleteProductMutation,
     DeleteProductMutationVariables
@@ -58,86 +62,52 @@ export default function Product() {
     onCompleted: async (data) => {
       if (data.deleteProduct.success) {
         console.log("Product deleted");
-        // 상품 목록 갱신
         await refetch();
       } else {
-        console.log("Failed to delete product:", data.deleteProduct.message);
+        console.error("Failed to delete product:", data.deleteProduct.message);
       }
     },
   });
 
-  const deleteProduct = (id: string) => {
-    deleteProductMutation({
-      variables: { id },
-    });
-  };
-
-  // 쿼리 변수 설정
-  const itemsPerPage = 16;
-  const offset = (page - 1) * itemsPerPage;
-
-  // 상품 데이터 가져오기
-  const { data, loading, error, refetch } = useQuery<
-    AllProductQuery,
-    AllProductQueryVariables
-  >(ALL_PRODUCT_QUERY, {
-    variables: { offset },
-    fetchPolicy: "cache-and-network",
-  });
-
-  // 상품 데이터 상태 관리 및 스크롤 위치 조정
   useEffect(() => {
     if (data?.allProduct) {
       const fetchedProducts = data.allProduct.filter(
         (product): product is Product => product !== null
       );
 
-      if (fetchedProducts.length < itemsPerPage) {
-        setIsLastPage(true);
-      } else {
-        setIsLastPage(false);
-      }
-
+      setIsLastPage(fetchedProducts.length < 16);
       setProducts(fetchedProducts);
     }
-  }, [data?.allProduct, itemsPerPage]);
+  }, [data?.allProduct]);
 
   useEffect(() => {
-    refetch({
-      offset: (page - 1) * itemsPerPage,
-    });
-  }, [isLoggedIn, page, refetch, itemsPerPage]);
+    refetch();
+  }, [isLoggedIn, page, refetch]);
 
-  // 페이지 변경 시 URL 쿼리 파라미터 업데이트
   useEffect(() => {
     const params = new URLSearchParams();
     params.set("page", page.toString());
-
     router.replace(`?${params.toString()}`);
   }, [page, router]);
 
-  // 페이지 변경 핸들러
   const handlePageChange = (pageNum: number) => {
     setPage(pageNum);
     setIsLastPage(false);
   };
 
-  // 삭제 버튼 클릭 핸들러
   const handleDeleteClick = (productId: string) => {
     setSelectedProductId(productId);
     setShowConfirm(true);
   };
 
-  // 삭제 확인 모달에서 'Y' 버튼 클릭 핸들러
   const handleConfirmDelete = () => {
     if (selectedProductId) {
-      deleteProduct(selectedProductId);
+      deleteProductMutation({ variables: { id: selectedProductId } });
       setShowConfirm(false);
       setSelectedProductId(null);
     }
   };
 
-  // 삭제 확인 모달에서 'N' 버튼 클릭 핸들러
   const handleCancelDelete = () => {
     setShowConfirm(false);
     setSelectedProductId(null);
@@ -153,12 +123,10 @@ export default function Product() {
 
   return (
     <div className="relative h-full">
-      {/* 배너 */}
       <div className="flex justify-center">
-        <Image src={banner} alt="Banner" width={0} height={0} priority={true} />
+        <Image src={banner} alt="Banner" width={0} height={0} priority />
       </div>
 
-      {/* 삭제 확인 모달 */}
       {showConfirm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-md">
@@ -181,9 +149,8 @@ export default function Product() {
         </div>
       )}
 
-      {/* 상품 목록 */}
       <div
-        ref={productListRef} // 참조 연결
+        ref={productListRef}
         className="p-5 grid grid-cols-4 max-2xl:grid-cols-4 max-xl:grid-cols-2 max-sm:grid-cols-1 transition-all transform items-center gap-5"
       >
         {products.length === 0 ? (
@@ -209,18 +176,16 @@ export default function Product() {
                 href={`/meta360/${product.id}`}
                 className="relative size-60 rounded-md mx-auto overflow-hidden"
               >
-                {product.original_photo &&
-                  product.original_photo.length > 0 &&
-                  product.original_photo[0] && (
-                    <Image
-                      className="object-cover h-full"
-                      width={360} // 1080 / 3
-                      height={640} // 1920 / 3
-                      src={product.original_photo[0]}
-                      alt={product.title.substring(0, 10)}
-                      priority={true}
-                    />
-                  )}
+                {product.original_photo && product.original_photo[0] && (
+                  <Image
+                    className="object-cover h-full"
+                    width={360}
+                    height={640}
+                    src={product.original_photo[0]}
+                    alt={product.title.substring(0, 10)}
+                    priority
+                  />
+                )}
               </Link>
               <div className="flex justify-center text-neutral-800">
                 <span className="text-lg">
@@ -232,7 +197,6 @@ export default function Product() {
         )}
       </div>
 
-      {/* 페이징 */}
       <div className="flex justify-center mt-4">
         <button
           type="button"
@@ -241,11 +205,7 @@ export default function Product() {
               ? "bg-gray-200 text-gray-800 cursor-not-allowed"
               : "bg-meta text-white"
           }`}
-          onClick={() => {
-            if (!isLastPage) {
-              handlePageChange(page + 1);
-            }
-          }}
+          onClick={() => !isLastPage && handlePageChange(page + 1)}
           disabled={isLastPage}
         >
           Next

@@ -1,37 +1,16 @@
-import { configureStore, combineReducers } from "@reduxjs/toolkit";
-import storage from "redux-persist/lib/storage";
-import { persistReducer, persistStore } from "redux-persist";
-import uploadPhotoState from "./slice/uploadPhotos";
-import createUserState from "./slice/createUser";
-import bottomSheetState from "./slice/bottomSheetState";
-import authState from "./slice/auth";
-
-const persistConfig = {
-  key: "root",
-  storage,
-  whitelist: ["auth_state"], // persist하고 싶은 슬라이스를 추가
-};
-
-const rootReducer = combineReducers({
-  upload_photos_state: uploadPhotoState,
-  create_user_state: createUserState,
-  bottom_sheet_state: bottomSheetState,
-  auth_state: authState,
-});
-
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+import { configureStore } from "@reduxjs/toolkit";
+import loginReducer, { loadToken } from "./slices/loginSlice";
 
 const store = configureStore({
-  reducer: persistedReducer,
+  reducer: {
+    login: loginReducer,
+  },
 });
 
-export default store;
-
-export function getStoreWithState(preloadedState?: RootState) {
-  return configureStore({ reducer: persistedReducer, preloadedState });
-}
+// store 생성 시 초기화 액션을 호출하여 상태를 로컬 스토리지와 동기화
+store.dispatch(loadToken());
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
-export const persistor = persistStore(store);
+export default store;

@@ -19,8 +19,8 @@ const notoSansKr = Noto_Sans_KR({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | MetaBank360",
-    default: "MetaBank360",
+    template: "RealMeta | MetaVision",
+    default: "MetaVision",
   },
   description: "360도 회전 촬영",
 };

@@ -4,11 +4,13 @@ import metabank from "@/public/main/메타뱅크 CI 가로+슬로건 black 1.svg
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
 export default function Footer() {
+  const pathname = usePathname(); // 현재 경로 가져오기
   const [openSections, setOpenSections] = useState<string[]>([]);
 
   const handleSectionToggle = (section: string) => {
@@ -18,6 +20,11 @@ export default function Footer() {
       setOpenSections([...openSections, section]);
     }
   };
+
+  // /admin 경로일 경우 빈 div 반환
+  if (pathname.startsWith("/admin")) {
+    return <div></div>;
+  }
 
   return (
     <div className="relative bottom-0 z-40 w-full bg-white pt-20">

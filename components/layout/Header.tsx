@@ -24,8 +24,10 @@ import { logOut } from "@/app/store/slices/loginSlice";
 import { GET_MY_QUERY } from "@/app/api/user/query";
 import { useQuery } from "@apollo/client";
 import useUser from "@/app/hooks/useUser";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
+  const pathname = usePathname(); // 현재 경로 가져오기
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -71,6 +73,11 @@ export default function Header() {
       document.body.style.overflow = "";
     };
   }, [menuOpen]);
+
+  // /admin 경로일 경우 빈 div 반환
+  if (pathname.startsWith("/admin")) {
+    return <div></div>;
+  }
 
   return (
     <div className="z-50 fixed w-full bg-meta py-7 max-md:navbar transition-all">

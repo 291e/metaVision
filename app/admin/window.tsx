@@ -225,7 +225,12 @@ export default function AdminPageWindow() {
         <div className="flex flex-col items-center w-full gap-2 px-8">
           {selectedMenu === "users" && (
             <div className="w-full my-4 h-screen">
-              <h2 className="text-2xl font-semibold mb-4">User List</h2>
+              <div className="flex justify-between items-center">
+                <span className="text-2xl font-semibold mb-4">User List</span>
+                <Link href={"/"}>
+                  <HomeIcon className="size-6" />
+                </Link>
+              </div>
               {allUsersData?.getAllUsers?.length ? (
                 <div className="flex flex-col border border-gray-300 divide-y">
                   {/* 첫 번째 행 (헤더) */}

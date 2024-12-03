@@ -37,7 +37,7 @@ const Home: React.FC = () => {
           <div className="flex flex-col text-5xl font-bold text-white  lg:text-left max-lg:text-3xl pt-10">
             <span>3D</span>
             <span>MODELS</span>
-            <div className="mt-4 flex flex-col gap-2 text-base">
+            <div className="mt-4 flex flex-col md:flex-row gap-2 text-base">
               <span>(주)메타뱅크</span>
               <span>360도 회전 인터랙션 촬영 시스템</span>
             </div>

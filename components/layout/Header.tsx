@@ -86,7 +86,7 @@ export default function Header() {
         <div className="flex items-center justify-between w-full md:text-base lg:text-lg xl:text-xl text-white transition-all">
           <Link className="max-w-40 max-h-10 max-lg:max-w-32" href="/">
             <Image
-              src={meta360}
+              src={metavision}
               alt="logo"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
@@ -123,7 +123,7 @@ export default function Header() {
               href="https://www.realmeta3d.com/"
             >
               <Image
-                src={metavision}
+                src={meta360}
                 alt="logo"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />

@@ -11,6 +11,8 @@ import metaver from "@/public/main/metaVer.svg";
 import google from "@/public/main/google.png";
 import { ArrowRightCircleIcon } from "@heroicons/react/24/solid";
 import CloseOpen from "@/components/shared/closeOpen";
+import PhotogrammetryUpload from "@/components/products/PhotogrammetryUpload";
+import ProductTabs from "@/components/products/ProductTab";
 
 const Home: React.FC = () => {
   const mobile360 = [
@@ -33,7 +35,7 @@ const Home: React.FC = () => {
   return (
     <div className="bg-white flex flex-col gap-10 text-black">
       <div className="relative h-[518px] transition-all">
-        <div className="absolute inset-0 z-10 flex flex-col items-start justify-center gap-5 p-5 sm:flex-row sm:items-center">
+        <div className="absolute inset-0 z-10 flex flex-col items-start justify-center gap-5 p-5 sm:flex-row sm:items-center sm:gap-20">
           <div className="flex flex-col text-5xl font-bold text-white  lg:text-left max-lg:text-3xl pt-10">
             <span>3D</span>
             <span>MODELS</span>
@@ -67,13 +69,7 @@ const Home: React.FC = () => {
             </div>
           </div>
           <div className="relative w-full max-w-sm lg:max-w-md max-sm:hidden">
-            <Image
-              className="scale-150 mt-14 object-contain rotate-[30deg]"
-              src={item}
-              alt="meta"
-              width={0}
-              height={0}
-            />
+            <PhotogrammetryUpload />
           </div>
         </div>
         <Image
@@ -98,7 +94,7 @@ const Home: React.FC = () => {
         </div>
         <div className="mx-auto">
           <div className="">
-            <Slide />
+            <ProductTabs />
           </div>
         </div>
       </div>

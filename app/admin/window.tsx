@@ -10,15 +10,14 @@ import {
   DeleteProductMutationVariables,
   EditProfileMutation,
   EditProfileMutationVariables,
+  DeleteAccountMutation,
+  DeleteAccountMutationVariables,
   EditProductMutation,
   EditProductMutationVariables,
 } from "@/app/gql/graphql";
 import { GET_ALL_USERS } from "@/app/api/user/query";
-
 import Image from "next/image";
 import {
-  TrashIcon,
-  PencilIcon,
   CubeIcon,
   UserIcon,
   Cog8ToothIcon,
@@ -31,16 +30,15 @@ import {
   DELETE_PRODUCT_MUTATION,
   EDIT_PRODUCT_MUTATION,
 } from "../api/product/mutation";
+import { DELETE_ACCOUNT_MUTATION, EDIT_MUTATION } from "../api/user/mutation";
 import Link from "next/link";
 import { HomeIcon } from "@heroicons/react/24/outline";
 import { logOut } from "../store/slices/loginSlice";
-
 import { useDispatch, useSelector } from "react-redux";
 
 const menuItems = [
   { id: "products", label: "상품 관리", icon: <CubeIcon className="size-6" /> },
   { id: "users", label: "회원 관리", icon: <UserIcon className="size-6" /> },
-  { id: "settings", label: "설정", icon: <Cog8ToothIcon className="size-6" /> },
 ];
 
 // 날짜 포맷 함수
@@ -78,25 +76,6 @@ export default function AdminPageWindow() {
     fetchPolicy: "network-only",
   });
 
-  // 상품 삭제 뮤테이션
-  const [deleteProductMutation] = useMutation<
-    DeleteProductMutation,
-    DeleteProductMutationVariables
-  >(DELETE_PRODUCT_MUTATION, {
-    onCompleted: (data) => {
-      if (data.deleteProduct.success) {
-        alert("상품이 성공적으로 삭제되었습니다.");
-        refetch(); // 상품 목록 갱신
-      } else {
-        alert(`삭제 실패: ${data.deleteProduct.message}`);
-      }
-    },
-    onError: (error) => {
-      console.error("상품 삭제 실패:", error.message);
-      alert("삭제 중 문제가 발생했습니다.");
-    },
-  });
-
   // 상품 수정 뮤테이션
   const [editProductMutation] = useMutation<
     EditProductMutation,
@@ -107,32 +86,6 @@ export default function AdminPageWindow() {
       setEditingProductId(null); // 수정 완료 후 수정 모드 해제
     },
   });
-
-  const handleDeleteProduct = (productId: string) => {
-    setSelectedProductId(productId);
-    setIsDeleteConfirmOpen(true); // 삭제 확인 모달 열기
-  };
-
-  const confirmDeleteProduct = async () => {
-    if (selectedProductId) {
-      try {
-        const { data } = await deleteProductMutation({
-          variables: { id: selectedProductId },
-        });
-        if (data?.deleteProduct?.success) {
-          alert("상품이 삭제되었습니다.");
-          setIsDeleteConfirmOpen(false);
-          setSelectedProductId(null);
-          refetch(); // UI 갱신
-        } else {
-          alert(`삭제 실패: ${data?.deleteProduct?.message}`);
-        }
-      } catch (error) {
-        console.error("삭제 중 오류 발생:", error);
-        alert("삭제 중 문제가 발생했습니다.");
-      }
-    }
-  };
 
   const handleEditProduct = (productId: string, title: string) => {
     setEditingProductId(productId);
@@ -165,13 +118,125 @@ export default function AdminPageWindow() {
     }
   };
 
+  // 상품 삭제 뮤테이션
+  const [deleteProductMutation] = useMutation<
+    DeleteProductMutation,
+    DeleteProductMutationVariables
+  >(DELETE_PRODUCT_MUTATION, {
+    onCompleted: async (data) => {
+      const {
+        deleteProduct: { success, message },
+      } = data;
+      console.log("삭제 요청 완료:", data); // 디버깅: 응답 데이터 확인
+      if (success) {
+        alert("상품이 성공적으로 삭제되었습니다.");
+        setIsDeleteConfirmOpen(false); // 모달을 즉시 닫음
+        await refetch(); // 상품 목록 갱신
+        // window.location.reload(); // 페이지 새로고침
+      } else {
+        console.error(`삭제 실패: ${message}`);
+        alert(`삭제 실패: ${message}`);
+      }
+    },
+    onError: (error) => {
+      console.error("상품 삭제 실패:", error.message);
+      alert("삭제 중 문제가 발생했습니다.");
+    },
+  });
+
+  const handleDeleteProduct = (productId: string) => {
+    console.log("삭제 요청된 상품 ID:", productId); // 디버깅: 삭제 요청된 ID 확인
+    setSelectedProductId(productId);
+    setIsDeleteConfirmOpen(true); // 삭제 확인 모달 열기
+  };
+
+  const confirmDeleteProduct = async (selectedId: string | null) => {
+    if (selectedId !== null) {
+      try {
+        console.log("삭제 실행 중, 선택된 상품 ID:", selectedId); // 디버깅: 삭제 실행 전 확인
+        // const { data } = await deleteProductMutation({
+        //   variables: { id: selectedProductId },
+        // });
+        await deleteProductMutation({
+          variables: {
+            id: selectedId,
+          },
+        });
+        // if (data?.deleteProduct?.success) {
+        //   console.log("상품 삭제 성공:", data); // 디버깅: 성공 메시지
+        //   alert("상품이 삭제되었습니다.");
+        //   setSelectedProductId(null); // 선택된 상품 초기화
+        //   refetch(); // UI 갱신
+        // } else {
+        //   console.error(`삭제 실패: ${data?.deleteProduct?.message}`);
+        //   alert(`삭제 실패: ${data?.deleteProduct?.message}`);
+        // }
+      } catch (error) {
+        console.error("삭제 중 오류 발생:", error);
+        alert("삭제 중 문제가 발생했습니다.");
+      } finally {
+        setSelectedProductId(null); // 선택된 상품 초기화
+      }
+    }
+  };
+
   const handleLogout = useCallback(() => {
     dispatch(logOut());
     // 홈 페이지로 새로고침하며 이동
     window.location.href = "/";
   }, [dispatch]);
 
-  if (userLoading || productLoading || usersLoading) return <p>Loading...</p>;
+  // 유저 삭제 뮤테이션
+  const [deleteUserMutation] = useMutation<
+    DeleteAccountMutation,
+    DeleteAccountMutationVariables
+  >(DELETE_ACCOUNT_MUTATION, {
+    onCompleted: async (data) => {
+      if (data.deleteAccount?.success) {
+        alert("유저가 성공적으로 삭제되었습니다.");
+        await refetch(); // 상품 목록 갱신
+      } else {
+        alert(`삭제 실패: ${data.deleteAccount?.message}`);
+      }
+    },
+    onError: (error) => {
+      console.error("유저 삭제 실패:", error.message);
+      alert("삭제 중 문제가 발생했습니다.");
+    },
+  });
+
+  // 유저 삭제 핸들러
+  const handleDeleteUser = async (email: string) => {
+    const confirmDelete = confirm("정말로 삭제하시겠습니까?");
+    if (confirmDelete) {
+      try {
+        const { data } = await deleteUserMutation({
+          variables: { email, password: "" }, // password는 빈 값으로 처리
+          update: (cache) => {
+            // 삭제된 유저를 캐시에서 제거
+            cache.modify({
+              fields: {
+                getAllUsers(existingUsers = [], { readField }) {
+                  return existingUsers.filter(
+                    (userRef: any) => readField("email", userRef) !== email
+                  );
+                },
+              },
+            });
+          },
+        });
+
+        if (data?.deleteAccount?.success) {
+        } else {
+          alert(`삭제 실패: ${data?.deleteAccount?.message}`);
+        }
+      } catch (error) {
+        console.error("삭제 중 오류 발생:", error);
+        alert("삭제 중 문제가 발생했습니다.");
+      }
+    }
+  };
+
   if (userError) return <p>Error: {userError.message}</p>;
 
   return (
@@ -179,8 +244,9 @@ export default function AdminPageWindow() {
       <div className="justify-between hidden md:flex">
         <div className="flex">
           <div className="max-w-[384px] w-full bg-slate-200 p-4 px-6">
-            <Image src={metaVision} alt="meta" width={0} height={0} />
-
+            <Link href="/">
+              <Image src={metaVision} alt="meta" width={0} height={0} />
+            </Link>
             <div className="flex flex-col justify-center items-start mt-8 gap-4 lg:w-[336px] md:w-[236px] w-[136px]">
               {menuItems.map((menu) => (
                 <div
@@ -221,12 +287,11 @@ export default function AdminPageWindow() {
           </div>
         </div>
 
-        {/* 선택된 메뉴에 따른 콘텐츠 렌더링 */}
         <div className="flex flex-col items-center w-full gap-2 px-8">
           {selectedMenu === "users" && (
             <div className="w-full my-4 h-screen">
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-semibold mb-4">User List</span>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-2xl font-semibold">User List</span>
                 <Link href={"/"}>
                   <HomeIcon className="size-6" />
                 </Link>
@@ -234,23 +299,32 @@ export default function AdminPageWindow() {
               {allUsersData?.getAllUsers?.length ? (
                 <div className="flex flex-col border border-gray-300 divide-y">
                   {/* 첫 번째 행 (헤더) */}
-                  <div className="grid grid-cols-4 bg-gray-100 px-4 py-2 font-semibold text-sm text-gray-700 text-left items-center">
+                  <div className="grid grid-cols-5 bg-gray-100 px-4 py-2 font-semibold text-sm text-gray-700 text-left items-center">
                     <span>유저명</span>
                     <span>어드민 유무</span>
                     <span>구독 여부</span>
                     <span>생성일</span>
+                    <span>액션</span>
                   </div>
                   {/* 데이터 행 */}
                   {allUsersData.getAllUsers.map((user) => (
                     <div
                       key={user?.id}
-                      className="grid grid-cols-4 px-4 py-2 text-sm items-center text-left"
-                      style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr" }}
+                      className="grid grid-cols-5 px-4 py-2 text-sm items-center text-left"
+                      style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr auto" }}
                     >
                       <span className="truncate">{user?.email}</span>
                       <span>{user?.isAdmin ? "Yes" : "No"}</span>
                       <span>{user?.isSubscribed ? "Yes" : "No"}</span>
                       <span>{formatDate(Number(user?.createdAt))}</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleDeleteUser(user!.email)}
+                          className="text-red-500 hover:text-red-700 w-[60px] h-[30px] bg-[#E5EAEE] rounded-md"
+                        >
+                          삭제
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -309,7 +383,7 @@ export default function AdminPageWindow() {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-4 h-full">
+                        <div className="flex items-start gap-4 h-full">
                           <div className="flex flex-col gap-2">
                             <div className="text-[#777777]">제목</div>
                             <div className="text-lg font-bold mb-2">
@@ -363,7 +437,7 @@ export default function AdminPageWindow() {
                   N
                 </button>
                 <button
-                  onClick={confirmDeleteProduct}
+                  onClick={() => confirmDeleteProduct(selectedProductId)}
                   className="px-4 py-2 bg-red-500 text-white rounded"
                 >
                   Y

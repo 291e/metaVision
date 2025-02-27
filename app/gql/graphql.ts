@@ -20,6 +20,16 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
+export type Adjustment = {
+  __typename?: 'Adjustment';
+  id: Scalars['String']['output'];
+  meanError: Scalars['Float']['output'];
+  product?: Maybe<Product>;
+  rmse: Scalars['Float']['output'];
+  standardDeviationOfError: Scalars['Float']['output'];
+  transformationMatrix?: Maybe<Array<Maybe<Scalars['Float']['output']>>>;
+};
+
 export type EditProfileResult = {
   __typename?: 'EditProfileResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -93,6 +103,7 @@ export type MutationResetPasswordArgs = {
 
 
 export type MutationUploadProductArgs = {
+  alignment?: InputMaybe<Scalars['Boolean']['input']>;
   original_photo?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   title: Scalars['String']['input'];
 };
@@ -107,7 +118,9 @@ export type Product = {
   __typename?: 'Product';
   createdAt: Scalars['String']['output'];
   id: Scalars['String']['output'];
+  meanError?: Maybe<Scalars['Float']['output']>;
   original_photo?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  result_adjustment?: Maybe<Scalars['String']['output']>;
   result_ao?: Maybe<Scalars['String']['output']>;
   result_disp?: Maybe<Scalars['String']['output']>;
   result_gltf?: Maybe<Scalars['String']['output']>;
@@ -117,7 +130,10 @@ export type Product = {
   result_roughness?: Maybe<Scalars['String']['output']>;
   result_texture?: Maybe<Scalars['String']['output']>;
   result_usda?: Maybe<Scalars['String']['output']>;
+  rmse?: Maybe<Scalars['Float']['output']>;
+  standardDeviationOfError?: Maybe<Scalars['Float']['output']>;
   title: Scalars['String']['output'];
+  transformationMatrix?: Maybe<Array<Maybe<Scalars['Float']['output']>>>;
   updatedAt: Scalars['String']['output'];
   user: User;
 };
@@ -305,6 +321,16 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
+export type Adjustment = {
+  __typename?: 'Adjustment';
+  id: Scalars['String']['output'];
+  meanError: Scalars['Float']['output'];
+  product?: Maybe<Product>;
+  rmse: Scalars['Float']['output'];
+  standardDeviationOfError: Scalars['Float']['output'];
+  transformationMatrix?: Maybe<Array<Maybe<Scalars['Float']['output']>>>;
+};
+
 export type EditProfileResult = {
   __typename?: 'EditProfileResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -378,6 +404,7 @@ export type MutationResetPasswordArgs = {
 
 
 export type MutationUploadProductArgs = {
+  alignment?: InputMaybe<Scalars['Boolean']['input']>;
   original_photo?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   title: Scalars['String']['input'];
 };
@@ -392,7 +419,9 @@ export type Product = {
   __typename?: 'Product';
   createdAt: Scalars['String']['output'];
   id: Scalars['String']['output'];
+  meanError?: Maybe<Scalars['Float']['output']>;
   original_photo?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  result_adjustment?: Maybe<Scalars['String']['output']>;
   result_ao?: Maybe<Scalars['String']['output']>;
   result_disp?: Maybe<Scalars['String']['output']>;
   result_gltf?: Maybe<Scalars['String']['output']>;
@@ -402,7 +431,10 @@ export type Product = {
   result_roughness?: Maybe<Scalars['String']['output']>;
   result_texture?: Maybe<Scalars['String']['output']>;
   result_usda?: Maybe<Scalars['String']['output']>;
+  rmse?: Maybe<Scalars['Float']['output']>;
+  standardDeviationOfError?: Maybe<Scalars['Float']['output']>;
   title: Scalars['String']['output'];
+  transformationMatrix?: Maybe<Array<Maybe<Scalars['Float']['output']>>>;
   updatedAt: Scalars['String']['output'];
   user: User;
 };

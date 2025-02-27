@@ -1,11 +1,6 @@
-// app/api/proxy/[...path]/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 
-export const config = {
-  runtime: "nodejs",
-  // 대용량 파일 전송을 위해 필요에 따라 설정
-};
+export const runtime = "nodejs"; // 최신 방식으로 수정
 
 export async function GET(request: NextRequest) {
   const { pathname, search } = new URL(request.url);

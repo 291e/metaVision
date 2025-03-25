@@ -5,5 +5,5 @@ export default function TabsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="pt-20 text-black">{children}</div>;
+  return <div className=" text-black">{children}</div>;
 }

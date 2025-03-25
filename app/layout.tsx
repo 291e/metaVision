@@ -33,12 +33,23 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${notoSansKr.className} overflow-x-hidden bg-white`}>
+      <body
+        className={`${notoSansKr.className} overflow-x-hidden h-screen bg-white overflow-hidden `}
+      >
         <ClientProviders>
           <ApolloWrapper>
-            <Header />
-            {children}
-            <Footer />
+            <div className="flex flex-col w-full h-full overflow-y-auto">
+              <div className="flex flex-col flex-1">
+                <Header />
+                <main className="pt-[80px] lg:pt-[94px] flex-1 ">
+                  {children}
+                </main>
+              </div>
+
+              <div className="flex flex-1 items-end">
+                <Footer />
+              </div>
+            </div>
           </ApolloWrapper>
         </ClientProviders>
       </body>

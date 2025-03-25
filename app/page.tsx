@@ -34,13 +34,11 @@ const Home: React.FC = () => {
     },
   ];
   return (
-    <div className="bg-white flex flex-col gap-10 text-black">
+    <div className="bg-white flex flex-col gap-10 text-black pb-20">
       <div className="relative h-[518px] transition-all">
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-5 p-5 sm:flex-row sm:items-center sm:gap-40">
-      
-        <PhotogrammetryViewer />
-        <PhotogrammetryUpload />
-         
+          <PhotogrammetryViewer />
+          <PhotogrammetryUpload />
         </div>
         <Image
           src={bg}
@@ -109,10 +107,12 @@ const Home: React.FC = () => {
       </div>
 
       <div>
-        <div className="flex flex-col lg:flex-row items-center  lg:justify-center lg:gap-20 bg-neutral-50 py-10">
+        <div className="flex flex-col lg:flex-row items-center  lg:justify-center lg:gap-20 bg-neutral-50 py-10 px-4">
           <div className="flex flex-col gap-4 items-center">
             <span className="font-semibold text-xl text-meta">다양성</span>
-            <span>리얼 메타는 다양한 모델을 구분 없이 제시하고 있습니다.</span>
+            <span className="text-center">
+              리얼 메타는 다양한 모델을 구분 없이 제시하고 있습니다.
+            </span>
 
             <Image
               className="pt-10"
@@ -126,7 +126,7 @@ const Home: React.FC = () => {
             <CloseOpen />
           </div>
           <div className="hidden lg:block">
-            <div className="grid grid-cols-3 grid-rows-3 py-6 *:shadow-md *:rounded-lg *:flex *:justify-center *:items-center gap-4 *:text-meta *:p-4 animate-fade-in select-none">
+            <div className="grid grid-cols-3 grid-rows-3 py-6 *:shadow-md *:rounded-lg *:flex *:justify-center *:items-center gap-4 *:text-meta *:p-4 animate-fade-in select-none *:text-center px-4">
               <span>운동화</span>
               <span>자동차 및 차량</span>
               <span>건축 자재</span>
@@ -150,7 +150,7 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row items-center w-full justify-center gap-10">
+      <div className="flex flex-col lg:flex-row items-center w-full justify-center gap-10 px-4">
         <div className="px-4 py-5 max-xl:max-w-[400px] bg-gradient-to-r from-[#FEB6B2CC] to-[#FF4848CC] rounded-xl flex justify-center items-center shadow-md">
           <Link
             href="https://play.google.com/store/apps/details?id=com.metabank.meta360&pli=1"

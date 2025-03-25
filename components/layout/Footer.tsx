@@ -27,7 +27,7 @@ export default function Footer() {
   }
 
   return (
-    <div className="relative bottom-0 z-40 w-full bg-white pt-20">
+    <div className="relative bottom-0 z-40 w-full bg-white">
       <div className="h-px w-full bg-neutral-400 mb-12" />
       <div className="pl-32 max-md:pl-10">
         <Image src={metabank} alt="logo" width={0} height={0} />
@@ -378,7 +378,7 @@ export default function Footer() {
       </div>
 
       <div className="h-px w-full bg-neutral-400" />
-      <div className="py-12 bg-white flex justify-center items-center gap-20 max-md:gap-10 max-sm:gap-4 max-md:flex-col max-md:items-start max-md:pl-10 text-black ">
+      <div className="py-6 bg-white flex justify-center items-center gap-20 max-md:gap-10 max-sm:gap-4 max-md:flex-col max-md:items-start max-md:pl-10 text-black ">
         <span>© 2023 metabank, Inc</span>
         <div className="gap-20 max-md:gap-10 max-sm:gap-4 flex max-md:text-neutral-400 max-md:underline-offset-2 max-md:underline">
           <Link href="">이용약관</Link>

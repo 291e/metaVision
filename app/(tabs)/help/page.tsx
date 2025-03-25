@@ -21,21 +21,21 @@ export default function Chat() {
 
   return (
     <div className="flex items-center w-full justify-center py-20 bg-gradient-to-b from-[#7FC6FE] to-[#8481FE]">
-      <div className="flex flex-col gap-20 w-[500px] h-[700px] px-10 md:w-[700px] md:h-[750px]">
+      <div className="flex flex-col gap-20 w-full h-[700px] px-10 md:w-[700px] md:h-[750px]">
         {videoUrls.map((url, index) => (
           <div
             key={index}
             className="relative w-full h-0 shadow-md"
             style={{
               paddingBottom: "56.25%",
-              borderRadius: "20px",
+              borderRadius: "10px",
               overflow: "hidden",
             }} // 16:9 비율 유지
           >
             <ReactPlayer
               key={index}
               url={url}
-              style={{ borderRadius: "20px" }}
+              style={{ borderRadius: "10px" }}
             />
           </div>
         ))}

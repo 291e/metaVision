@@ -85,7 +85,7 @@ export default function LogIn() {
   };
 
   return (
-    <div className="flex flex-col gap-10 py-8 px-6 border-2 rounded-2xl border-neutral-200 shadow-md bg-neutral-700 text-white w-full max-w-screen-sm mt-20">
+    <div className="flex flex-col gap-10 py-8 px-6 border-2 rounded-2xl border-neutral-200 shadow-md bg-neutral-700 text-white w-full max-w-screen-sm mb-20">
       <div className="flex flex-col gap-2 font-medium ">
         <h1 className="text-2xl">Metabank360</h1>
         <h2 className="text-xl">

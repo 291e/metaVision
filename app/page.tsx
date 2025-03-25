@@ -13,6 +13,7 @@ import { ArrowRightCircleIcon } from "@heroicons/react/24/solid";
 import CloseOpen from "@/components/shared/closeOpen";
 import PhotogrammetryUpload from "@/components/products/PhotogrammetryUpload";
 import ProductTabs from "@/components/products/ProductTab";
+import PhotogrammetryViewer from "@/components/products/PhotogrammetryViewer";
 
 const Home: React.FC = () => {
   const mobile360 = [
@@ -35,42 +36,11 @@ const Home: React.FC = () => {
   return (
     <div className="bg-white flex flex-col gap-10 text-black">
       <div className="relative h-[518px] transition-all">
-        <div className="absolute inset-0 z-10 flex flex-col items-start justify-center gap-5 p-5 sm:flex-row sm:items-center sm:gap-20">
-          <div className="flex flex-col text-5xl font-bold text-white  lg:text-left max-lg:text-3xl pt-10">
-            <span>3D</span>
-            <span>MODELS</span>
-            <div className="mt-4 flex flex-col md:flex-row gap-2 text-base">
-              <span>(주)메타뱅크</span>
-              <span>360도 회전 인터랙션 촬영 시스템</span>
-            </div>
-            <div className="flex flex-shrink gap-6 pt-10 max-md:flex-col items-center max-md:items-start">
-              <Link
-                className="bg-white p-2 px-4 rounded-md text-meta hover:bg-meta hover:text-white text-base transition-colors "
-                href="/create-account"
-              >
-                무료로 시작하기
-              </Link>
-
-              <div className="flex flex-col gap-4">
-                <Link
-                  href="https://apps.apple.com/us/app/meta360/id6502634260"
-                  target="blink"
-                >
-                  <Image src={app} alt="App" width={0} height={0} />
-                </Link>
-
-                <Link
-                  href="https://play.google.com/store/apps/details?id=com.metabank.meta360&pli=1"
-                  target="blink"
-                >
-                  <Image src={google} alt="Google" width={0} height={0} />
-                </Link>
-              </div>
-            </div>
-          </div>
-          <div className="relative w-full max-w-sm lg:max-w-md max-sm:hidden">
-            <PhotogrammetryUpload />
-          </div>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-5 p-5 sm:flex-row sm:items-center sm:gap-40">
+      
+        <PhotogrammetryViewer />
+        <PhotogrammetryUpload />
+         
         </div>
         <Image
           src={bg}

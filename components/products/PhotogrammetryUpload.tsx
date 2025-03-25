@@ -139,27 +139,27 @@ const PhotogrammetryUpload: React.FC = () => {
   };
 
   return (
-    <div className="relative p-4 rounded-lg bg-[rgba(0,0,0,0.3)] shadow-md">
+    <div className="relative p-4 rounded-lg bg-[rgba(0,0,0,0.3)] shadow-md w-full max-w-md">
       {/* Confetti 효과 */}
       {showFanfare && <ReactConfetti recycle={false} numberOfPieces={500} />}
       {!uploadComplete ? (
         <>
           {/* 타이틀 입력 */}
-          <input
+          {/* <input
             type="text"
             placeholder="타이틀 입력"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="mb-4 p-2  rounded w-full bg-transparent outline-none focus:border-transparent focus:ring-white"
-          />
+          /> */}
           {/* 커스텀 파일 입력 UI */}
-          <div className="mb-4">
+          <div className="mb-4 min-w-52">
             <label
               htmlFor="folder-input"
-              className="flex flex-col items-center justify-center p-6 bg-[rgba(0,0,0,0.4)] border-dashed border-2 border-gray-300 rounded cursor-pointer *:hover:text-white"
+              className="px-6 border-2 rounded-md text-gray-500 cursor-pointer hover:text-white bg-[rgba(0,0,0,0.4)] border-dashed flex flex-col items-center justify-center p-6 min-w-52 transition"
             >
               <FaFolderOpen className="text-4xl text-gray-600  mb-2" />
-              <span className="text-gray-600 ">폴더 불러오기</span>
+              <span>폴더 불러오기</span>
               {files.length > 0 && (
                 <span className="mt-2 text-green-600">
                   {files.length}개의 파일 선택됨
@@ -177,10 +177,10 @@ const PhotogrammetryUpload: React.FC = () => {
           {/* 업로드 버튼 */}
           <button
             onClick={handleUpload}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full transition"
             disabled={uploading}
           >
-            생성
+            Photogrammetry 생성
           </button>
           {/* 진행률 표시 */}
           {uploading && (

@@ -30,6 +30,33 @@ export type Adjustment = {
   transformationMatrix?: Maybe<Array<Maybe<Scalars['Float']['output']>>>;
 };
 
+export type Asset = {
+  __typename?: 'Asset';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  isPublic: Scalars['Boolean']['output'];
+  meanError?: Maybe<Scalars['Float']['output']>;
+  original_photo: Array<Scalars['String']['output']>;
+  result_adjustment?: Maybe<Scalars['String']['output']>;
+  result_ao?: Maybe<Scalars['String']['output']>;
+  result_disp?: Maybe<Scalars['String']['output']>;
+  result_gltf?: Maybe<Scalars['String']['output']>;
+  result_mtl?: Maybe<Scalars['String']['output']>;
+  result_normal?: Maybe<Scalars['String']['output']>;
+  result_obj?: Maybe<Scalars['String']['output']>;
+  result_roughness?: Maybe<Scalars['String']['output']>;
+  result_texture?: Maybe<Scalars['String']['output']>;
+  result_usda?: Maybe<Scalars['String']['output']>;
+  result_usdz?: Maybe<Scalars['String']['output']>;
+  rmse?: Maybe<Scalars['Float']['output']>;
+  standardDeviationOfError?: Maybe<Scalars['Float']['output']>;
+  title: Scalars['String']['output'];
+  transformationMatrix: Array<Scalars['Float']['output']>;
+  updatedAt: Scalars['String']['output'];
+  user?: Maybe<User>;
+  userId?: Maybe<Scalars['String']['output']>;
+};
+
 export type EditProfileResult = {
   __typename?: 'EditProfileResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -54,7 +81,9 @@ export type Mutation = {
   __typename?: 'Mutation';
   createAccount: MutationResponse;
   deleteAccount: MutationResponse;
+  deleteAsset?: Maybe<Scalars['Boolean']['output']>;
   deleteProduct: MutationResponse;
+  editAsset?: Maybe<Asset>;
   editProduct: MutationResponse;
   editProfile: MutationResponse;
   login: LoginMutationResponse;
@@ -75,8 +104,20 @@ export type MutationDeleteAccountArgs = {
 };
 
 
+export type MutationDeleteAssetArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteProductArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type MutationEditAssetArgs = {
+  id: Scalars['ID']['input'];
+  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -140,11 +181,19 @@ export type Product = {
 
 export type Query = {
   __typename?: 'Query';
+  allAsset?: Maybe<Array<Maybe<Asset>>>;
   allProduct?: Maybe<Array<Maybe<Product>>>;
+  assetDetail?: Maybe<Asset>;
   getAllUsers?: Maybe<Array<Maybe<User>>>;
+  getMyAsset?: Maybe<Array<Maybe<Asset>>>;
   getMyInfo?: Maybe<User>;
   getMyProduct?: Maybe<Array<Maybe<Product>>>;
   productDetail?: Maybe<Product>;
+};
+
+
+export type QueryAllAssetArgs = {
+  offset: Scalars['Int']['input'];
 };
 
 
@@ -153,7 +202,17 @@ export type QueryAllProductArgs = {
 };
 
 
+export type QueryAssetDetailArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryGetAllUsersArgs = {
+  offset: Scalars['Int']['input'];
+};
+
+
+export type QueryGetMyAssetArgs = {
   offset: Scalars['Int']['input'];
 };
 
@@ -331,6 +390,33 @@ export type Adjustment = {
   transformationMatrix?: Maybe<Array<Maybe<Scalars['Float']['output']>>>;
 };
 
+export type Asset = {
+  __typename?: 'Asset';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  isPublic: Scalars['Boolean']['output'];
+  meanError?: Maybe<Scalars['Float']['output']>;
+  original_photo: Array<Scalars['String']['output']>;
+  result_adjustment?: Maybe<Scalars['String']['output']>;
+  result_ao?: Maybe<Scalars['String']['output']>;
+  result_disp?: Maybe<Scalars['String']['output']>;
+  result_gltf?: Maybe<Scalars['String']['output']>;
+  result_mtl?: Maybe<Scalars['String']['output']>;
+  result_normal?: Maybe<Scalars['String']['output']>;
+  result_obj?: Maybe<Scalars['String']['output']>;
+  result_roughness?: Maybe<Scalars['String']['output']>;
+  result_texture?: Maybe<Scalars['String']['output']>;
+  result_usda?: Maybe<Scalars['String']['output']>;
+  result_usdz?: Maybe<Scalars['String']['output']>;
+  rmse?: Maybe<Scalars['Float']['output']>;
+  standardDeviationOfError?: Maybe<Scalars['Float']['output']>;
+  title: Scalars['String']['output'];
+  transformationMatrix: Array<Scalars['Float']['output']>;
+  updatedAt: Scalars['String']['output'];
+  user?: Maybe<User>;
+  userId?: Maybe<Scalars['String']['output']>;
+};
+
 export type EditProfileResult = {
   __typename?: 'EditProfileResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -355,7 +441,9 @@ export type Mutation = {
   __typename?: 'Mutation';
   createAccount: MutationResponse;
   deleteAccount: MutationResponse;
+  deleteAsset?: Maybe<Scalars['Boolean']['output']>;
   deleteProduct: MutationResponse;
+  editAsset?: Maybe<Asset>;
   editProduct: MutationResponse;
   editProfile: MutationResponse;
   login: LoginMutationResponse;
@@ -376,8 +464,20 @@ export type MutationDeleteAccountArgs = {
 };
 
 
+export type MutationDeleteAssetArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteProductArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type MutationEditAssetArgs = {
+  id: Scalars['ID']['input'];
+  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -441,11 +541,19 @@ export type Product = {
 
 export type Query = {
   __typename?: 'Query';
+  allAsset?: Maybe<Array<Maybe<Asset>>>;
   allProduct?: Maybe<Array<Maybe<Product>>>;
+  assetDetail?: Maybe<Asset>;
   getAllUsers?: Maybe<Array<Maybe<User>>>;
+  getMyAsset?: Maybe<Array<Maybe<Asset>>>;
   getMyInfo?: Maybe<User>;
   getMyProduct?: Maybe<Array<Maybe<Product>>>;
   productDetail?: Maybe<Product>;
+};
+
+
+export type QueryAllAssetArgs = {
+  offset: Scalars['Int']['input'];
 };
 
 
@@ -454,7 +562,17 @@ export type QueryAllProductArgs = {
 };
 
 
+export type QueryAssetDetailArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryGetAllUsersArgs = {
+  offset: Scalars['Int']['input'];
+};
+
+
+export type QueryGetMyAssetArgs = {
   offset: Scalars['Int']['input'];
 };
 

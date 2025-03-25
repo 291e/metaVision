@@ -8,6 +8,7 @@ import useUser from "@/app/hooks/useUser";
 import { UPLOAD_PRODUCT_MUTATION } from "@/app/api/product/mutation";
 import ReactConfetti from "react-confetti";
 import { FaFolderOpen } from "react-icons/fa";
+import { AiFillPicture } from "react-icons/ai";
 
 // S3 클라이언트 생성 (주의: 클라이언트에서 secret key 사용은 개발/테스트 환경에서만 사용)
 const s3Client = new S3Client({
@@ -145,21 +146,22 @@ const PhotogrammetryUpload: React.FC = () => {
       {!uploadComplete ? (
         <>
           {/* 타이틀 입력 */}
-          {/* <input
+          <input
             type="text"
             placeholder="타이틀 입력"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mb-4 p-2  rounded w-full bg-transparent outline-none focus:border-transparent focus:ring-white"
-          /> */}
+            className="mb-4 p-2  rounded w-full bg-transparent outline-none focus:border-transparent focus:ring-white text-white"
+          />
           {/* 커스텀 파일 입력 UI */}
           <div className="mb-4 min-w-52">
             <label
               htmlFor="folder-input"
               className="px-6 border-2 rounded-md text-gray-500 cursor-pointer hover:text-white bg-[rgba(0,0,0,0.4)] border-dashed flex flex-col items-center justify-center p-6 min-w-52 transition"
             >
-              <FaFolderOpen className="text-4xl text-gray-600  mb-2" />
-              <span>폴더 불러오기</span>
+              <AiFillPicture className="text-4xl text-gray-600  mb-2" />
+
+              <span>사진 불러오기(최소 10장)</span>
               {files.length > 0 && (
                 <span className="mt-2 text-green-600">
                   {files.length}개의 파일 선택됨

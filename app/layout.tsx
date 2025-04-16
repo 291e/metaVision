@@ -41,9 +41,7 @@ export default async function RootLayout({
             <div className="flex flex-col w-full h-full overflow-y-auto">
               <div className="flex flex-col flex-1">
                 <Header />
-                <main className="pt-[80px] lg:pt-[94px] flex-1 ">
-                  {children}
-                </main>
+                <main className="flex-1 ">{children}</main>
               </div>
 
               <div className="flex flex-1 items-end">

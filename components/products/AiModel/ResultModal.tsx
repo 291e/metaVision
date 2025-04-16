@@ -3,19 +3,29 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader, OrbitControls } from "three-stdlib";
-import { FiX, FiRefreshCw, FiShare2, FiRotateCw } from "react-icons/fi";
+import { FiX, FiRefreshCw, FiShare2, FiRotateCw, FiSave } from "react-icons/fi";
 import { MdError } from "react-icons/md";
 
 interface ResultModalProps {
   blobUrl: string;
   onClose: () => void;
   onReset: () => void;
+  onSave?: () => Promise<void>;
+  s3Uploading?: boolean;
+  s3UploadProgress?: number;
+  modelTitle?: string;
+  onTitleChange?: (title: string) => void;
 }
 
 export default function ResultModal({
   blobUrl,
   onClose,
   onReset,
+  onSave,
+  s3Uploading = false,
+  s3UploadProgress = 0,
+  modelTitle = "",
+  onTitleChange,
 }: ResultModalProps) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const modelRef = useRef<THREE.Group | null>(null);
@@ -295,6 +305,13 @@ export default function ResultModal({
     };
   }, [onClose]);
 
+  // 모델 제목 변경 핸들러
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onTitleChange) {
+      onTitleChange(e.target.value);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
@@ -313,9 +330,21 @@ export default function ResultModal({
       >
         {/* 헤더 */}
         <div className="p-4 border-b flex justify-between items-center">
-          <h3 className="text-xl font-semibold text-gray-800">
-            AI 3D 모델 결과
-          </h3>
+          <div className="flex items-center gap-2 flex-1">
+            <h3 className="text-xl font-semibold text-gray-800">
+              AI 3D 모델 결과
+            </h3>
+            {onSave && (
+              <input
+                type="text"
+                value={modelTitle}
+                onChange={handleTitleChange}
+                placeholder="모델 제목 입력"
+                className="ml-4 px-2 py-1 border rounded text-sm flex-1"
+                disabled={s3Uploading}
+              />
+            )}
+          </div>
           <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100 transition"
@@ -331,6 +360,14 @@ export default function ResultModal({
               <div className="w-24 h-24 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
               <p className="mt-4 font-medium text-gray-700">
                 모델 로딩 중... {loadingProgress}%
+              </p>
+            </div>
+          )}
+          {s3Uploading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-90 z-20">
+              <div className="w-24 h-24 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-4 font-medium text-gray-700">
+                모델 저장 중... {s3UploadProgress.toFixed(0)}%
               </p>
             </div>
           )}
@@ -355,10 +392,22 @@ export default function ResultModal({
             </button>
           </div>
 
-          <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition">
-            <FiShare2 size={18} />
-            공유하기
-          </button>
+          <div className="flex gap-2">
+            {onSave && (
+              <button
+                onClick={onSave}
+                disabled={s3Uploading}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                <FiSave size={18} />
+                {s3Uploading ? "저장 중..." : "내 계정에 저장"}
+              </button>
+            )}
+            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition">
+              <FiShare2 size={18} />
+              공유하기
+            </button>
+          </div>
         </div>
       </div>
     </div>

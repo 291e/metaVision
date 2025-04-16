@@ -3,9 +3,12 @@
 import React, { useState } from "react";
 import Slide from "@/lib/swiper"; // 기존 전체 상품 슬라이드 컴포넌트
 import MyAssetsSlide from "@/components/products/MyAssetsSlide";
+import AiModelSlide from "@/components/products/AiModelSlide"; // AI 3D 모델 슬라이드 컴포넌트 추가 (나중에 생성)
+
+type TabType = "all" | "mine" | "ai3d";
 
 const ProductTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
+  const [activeTab, setActiveTab] = useState<TabType>("all");
 
   return (
     <div className="pb-4 relative">
@@ -31,10 +34,26 @@ const ProductTabs: React.FC = () => {
         >
           나의 자산
         </button>
+        <button
+          className={`px-4 py-2 border-b-2 ${
+            activeTab === "ai3d"
+              ? "border-blue-500 font-bold"
+              : "border-transparent"
+          }`}
+          onClick={() => setActiveTab("ai3d")}
+        >
+          AI 3D 모델
+        </button>
       </div>
       {/* 탭 내용 */}
       <div className="mx-auto">
-        {activeTab === "all" ? <Slide /> : <MyAssetsSlide />}
+        {activeTab === "all" ? (
+          <Slide />
+        ) : activeTab === "mine" ? (
+          <MyAssetsSlide />
+        ) : (
+          <AiModelSlide />
+        )}
       </div>
     </div>
   );

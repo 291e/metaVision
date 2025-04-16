@@ -80,7 +80,7 @@ export default function Header() {
   }
 
   return (
-    <div className="z-50 fixed w-full bg-meta py-7 max-md:navbar transition-all">
+    <div className="z-50 fixed w-full bg-meta py-8 max-md:navbar transition-all">
       {/* 데스크톱 메뉴 */}
       <div className="flex justify-center md:max-w-[870px] lg:max-w-[1100px] xl:max-w-[1300px] px-10 mx-auto max-md:hidden">
         <div className="flex items-center justify-between w-full md:text-base lg:text-lg xl:text-xl text-white transition-all">

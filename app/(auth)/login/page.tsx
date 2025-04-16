@@ -8,7 +8,6 @@ import { useMutation } from "@apollo/client";
 import { LoginMutation, LoginMutationVariables } from "../../gql/graphql";
 import { LOGIN_MUTATION } from "../../api/user/mutation";
 import { useDispatch } from "react-redux";
-import SocialLogin from "@/components/auth/social-login";
 import { logIn } from "@/app/store/slices/loginSlice";
 
 type LogInData = {
@@ -145,8 +144,6 @@ export default function LogIn() {
           {loading ? "로딩 중" : "Log In"}
         </button>
       </form>
-
-      <SocialLogin />
     </div>
   );
 }

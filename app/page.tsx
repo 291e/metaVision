@@ -27,15 +27,15 @@ const Home: React.FC = () => {
       <div className="relative h-[450px] lg:h-[518px] transition-all">
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-5 p-5 md:flex-row md:items-center md:gap-40">
           {/* 768px 이상에서는 두 컴포넌트 모두 표시 */}
-          <div className="hidden md:block w-full max-w-md">
+          <div className="hidden lg:block w-full max-w-md">
             <PhotogrammetryViewer />
           </div>
-          <div className="hidden md:block w-full max-w-md">
+          <div className="hidden lg:block w-full max-w-md">
             <PhotogrammetryUpload />
           </div>
 
           {/* 768px 미만에서는 토글 방식으로 표시 */}
-          <div className="w-full max-w-md md:hidden">
+          <div className="w-full max-w-md lg:hidden">
             {/* 토글 버튼 */}
             <div className="flex mb-4 bg-blue-100 rounded-lg overflow-hidden">
               <button
@@ -46,7 +46,7 @@ const Home: React.FC = () => {
                 }`}
                 onClick={() => setActiveComponent("viewer")}
               >
-                3D 모델 보기
+                AI 3D 모델
               </button>
               <button
                 className={`flex-1 py-2 px-4 text-sm font-medium ${
@@ -56,7 +56,7 @@ const Home: React.FC = () => {
                 }`}
                 onClick={() => setActiveComponent("upload")}
               >
-                이미지 업로드
+                3D 모델
               </button>
             </div>
 

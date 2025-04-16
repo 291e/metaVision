@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { GLTFLoader, OrbitControls } from "three-stdlib";
+import { GLTFLoader, OrbitControls, DRACOLoader } from "three-stdlib";
 import { FiX, FiRefreshCw, FiShare2, FiRotateCw, FiSave } from "react-icons/fi";
 import { MdError } from "react-icons/md";
 
@@ -35,6 +35,7 @@ export default function ResultModal({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const resizeListenerRef = useRef<(() => void) | null>(null);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [rotationSpeed, setRotationSpeed] = useState(0.005);
   const [error, setError] = useState<string | null>(null);
@@ -189,10 +190,122 @@ export default function ResultModal({
 
       // GLTFLoader로 모델 로드
       const loader = new GLTFLoader();
+
+      // DRACO 로더 설정 (압축된 메시 지원)
+      try {
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath(
+          "https://www.gstatic.com/draco/versioned/decoders/1.5.5/"
+        );
+        // 웹워커 사용 안 함 (더 안정적)
+        dracoLoader.setDecoderConfig({ type: "js" });
+        dracoLoader.preload();
+        loader.setDRACOLoader(dracoLoader);
+        console.log("✅ DRACO 로더 설정 완료");
+      } catch (error) {
+        console.error("⚠️ DRACO 로더 설정 실패:", error);
+        // DRACO 로더 설정 실패해도 계속 진행 (압축되지 않은 모델은 여전히 로드 가능)
+      }
+
+      // 기본 내장 모델로 전환을 위한 대체 URL
+      const fallbackModelUrl =
+        "https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
+
+      // 모델 로딩 최대 시간 설정
+      const loadingTimeout = setTimeout(() => {
+        if (!isModelLoaded) {
+          console.warn("⚠️ 모델 로딩 시간 초과, 대체 모델 사용");
+          try {
+            // 대체 모델 로드
+            loadFallbackModel();
+          } catch (e) {
+            console.error("대체 모델 로드 실패:", e);
+          }
+        }
+      }, 20000); // 20초 타임아웃
+
+      // 참조 저장
+      loadingTimeoutRef.current = loadingTimeout;
+
+      // 대체 모델 로드 함수
+      const loadFallbackModel = () => {
+        loader.load(
+          fallbackModelUrl,
+          (gltf) => {
+            console.log("✅ 대체 모델 로드 성공");
+            // 기존 모델이 이미 로드된 경우 무시
+            if (isModelLoaded) return;
+
+            const model = gltf.scene;
+
+            // 메시에 그림자 설정
+            model.traverse((child) => {
+              if ((child as THREE.Mesh).isMesh) {
+                (child as THREE.Mesh).castShadow = true;
+                (child as THREE.Mesh).receiveShadow = true;
+              }
+            });
+
+            if (sceneRef.current) {
+              sceneRef.current.add(model);
+              modelRef.current = model;
+
+              // 모델 크기에 맞게 카메라 위치 조정
+              const box = new THREE.Box3().setFromObject(model);
+              const size = box.getSize(new THREE.Vector3()).length();
+              const center = box.getCenter(new THREE.Vector3());
+
+              model.position.x = 0 - center.x;
+              model.position.z = 0 - center.z;
+              model.position.y = 0 - center.y;
+
+              if (cameraRef.current) {
+                cameraRef.current.position.set(size, size * 0.5, size * 1.5);
+                cameraRef.current.lookAt(new THREE.Vector3(0, 0, 0));
+              }
+
+              // OrbitControls 타겟 재설정
+              if (controlsRef.current) {
+                controlsRef.current.target.set(0, 0, 0);
+                controlsRef.current.update();
+              }
+
+              setIsModelLoaded(true);
+              setLoadingProgress(100);
+              setError(null);
+            }
+          },
+          (xhr) => {
+            // 대체 모델 로딩 진행률 표시
+            const progress = Math.floor((xhr.loaded / xhr.total) * 100);
+            console.log(`🔄 대체 모델 로드 중: ${progress}%`);
+            setLoadingProgress(progress);
+          },
+          (error) => {
+            console.error("❌ 대체 모델 로드 오류:", error);
+            setError(
+              "3D 모델을 렌더링하는데 실패했습니다. 브라우저를 새로고침해 주세요."
+            );
+            setIsModelLoaded(false);
+          }
+        );
+      };
+
+      // 원본 모델 로드 시도
+      let loadStarted = true;
       loader.load(
         blobUrl,
         (gltf) => {
-          console.log("✅ 모델 로드 성공");
+          // 타임아웃 클리어
+          if (loadingTimeoutRef.current) {
+            clearTimeout(loadingTimeoutRef.current);
+            loadingTimeoutRef.current = null;
+          }
+
+          // 이미 다른 모델이 로드된 경우 중복 처리 방지
+          if (isModelLoaded) return;
+
+          console.log("✅ 원본 모델 로드 성공");
           const model = gltf.scene;
 
           // 메시에 그림자 설정
@@ -287,6 +400,10 @@ export default function ResultModal({
     // 언마운트 시 정리
     return () => {
       console.log("🔚 뷰어 정리");
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current); // 타임아웃 정리
+        loadingTimeoutRef.current = null;
+      }
       cleanupResources();
     };
   }, [isReady, blobUrl, rotationSpeed]);
@@ -381,14 +498,17 @@ export default function ResultModal({
               onClick={onReset}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg flex items-center gap-2 transition"
             >
-              <FiRefreshCw size={18} />새 모델 만들기
+              <FiRefreshCw size={18} />
+              <span className="hidden md:block">새 모델 만들기</span>
             </button>
             <button
               onClick={toggleRotation}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg flex items-center gap-2 transition"
             >
               <FiRotateCw size={18} />
-              {rotationSpeed > 0 ? "회전 중지" : "회전"}
+              <span className="hidden md:block">
+                {rotationSpeed > 0 ? "회전 중지" : "회전"}
+              </span>
             </button>
           </div>
 
@@ -400,12 +520,14 @@ export default function ResultModal({
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 <FiSave size={18} />
-                {s3Uploading ? "저장 중..." : "내 계정에 저장"}
+                <span className="hidden md:block">
+                  {s3Uploading ? "저장 중..." : "내 계정에 저장"}
+                </span>
               </button>
             )}
             <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition">
               <FiShare2 size={18} />
-              공유하기
+              <span className="hidden md:block">공유하기</span>
             </button>
           </div>
         </div>

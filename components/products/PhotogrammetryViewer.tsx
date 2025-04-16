@@ -17,6 +17,7 @@ import ResultModal from "./AiModel/ResultModal"; // 올바른 경로로 수정
 import { S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import useUser from "@/app/hooks/useUser";
+import { ObjectCannedACL } from "@aws-sdk/client-s3";
 
 const SERVER_URL = "realserver.metabank360.com:5100";
 
@@ -34,7 +35,8 @@ const uploadFileToS3 = async (
   file: Blob,
   fileName: string,
   contentType: string,
-  onProgress: (progress: number) => void
+  onProgress: (progress: number) => void,
+  acl?: ObjectCannedACL
 ): Promise<string> => {
   const upload = new Upload({
     client: s3Client,
@@ -43,6 +45,7 @@ const uploadFileToS3 = async (
       Key: fileName,
       Body: file,
       ContentType: contentType,
+      ACL: acl,
     },
     queueSize: 4,
     partSize: 5 * 1024 * 1024, // 5MB
@@ -258,118 +261,24 @@ export default function PhotogrammetryViewer() {
       }
 
       setError(null);
-      // sRGB 변환 처리를 위해 파일을 직접 설정하지 않고 변환 함수 호출
-      convertToSRGB(file);
+      // 불필요한 sRGB 변환 제거, 이미지 파일 직접 설정
+      setImageFile(file);
+      setLoading(false); // UI 튐 방지
     }
-  };
-
-  // 이미지를 sRGB 색상 공간으로 변환하는 함수
-  const convertToSRGB = (file: File) => {
-    setLoading(true);
-    setProgress(5);
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        // 캔버스 생성
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d", { colorSpace: "srgb" });
-
-        if (!ctx) {
-          console.error("Canvas 2D 컨텍스트를 생성할 수 없습니다.");
-          setImageFile(file); // 변환 실패 시 원본 파일 사용
-          setLoading(false);
-          return;
-        }
-
-        // 이미지 크기에 맞게 캔버스 설정
-        canvas.width = img.width;
-        canvas.height = img.height;
-
-        // 캔버스에 이미지 그리기 (sRGB 색상 공간에서)
-        ctx.drawImage(img, 0, 0);
-
-        // 이미지 데이터 가져오기
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-
-        // 이미지 밝기 조정 및 감마 보정
-        const brightnessIncrease = 1.3; // 밝기 증가 계수 (1보다 크면 밝아짐) - 1.2에서 1.3으로 증가
-        const gammaCorrection = 1.15; // 감마 보정 (1보다 작으면 어두운 영역 밝아짐) - 1.1에서 1.15로 증가
-
-        for (let i = 0; i < data.length; i += 4) {
-          // 이미지 데이터 처리 (RGBA 형식)
-          // 밝기 증가
-          data[i] = Math.min(
-            255,
-            Math.max(0, Math.floor(data[i] * brightnessIncrease))
-          ); // R
-          data[i + 1] = Math.min(
-            255,
-            Math.max(0, Math.floor(data[i + 1] * brightnessIncrease))
-          ); // G
-          data[i + 2] = Math.min(
-            255,
-            Math.max(0, Math.floor(data[i + 2] * brightnessIncrease))
-          ); // B
-
-          // 감마 보정 (어두운 부분을 더 밝게)
-          data[i] = Math.pow(data[i] / 255, 1 / gammaCorrection) * 255;
-          data[i + 1] = Math.pow(data[i + 1] / 255, 1 / gammaCorrection) * 255;
-          data[i + 2] = Math.pow(data[i + 2] / 255, 1 / gammaCorrection) * 255;
-        }
-
-        // 수정된 이미지 데이터를 캔버스에 적용
-        ctx.putImageData(imageData, 0, 0);
-
-        console.log("✅ 이미지 밝기 조정 및 감마 보정 완료");
-
-        // 캔버스 데이터를 Blob으로 변환
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              // 새 파일 생성 (원본과 같은 이름과 타입 사용)
-              const convertedFile = new File([blob], file.name, {
-                type: file.type,
-              });
-              console.log("✅ 이미지가 sRGB 색상 공간으로 변환되었습니다.");
-              setImageFile(convertedFile);
-
-              // 미리보기 URL 생성 (디버깅용)
-              const previewUrl = URL.createObjectURL(blob);
-              console.log("미리보기 URL 생성:", previewUrl);
-            } else {
-              console.error("Blob 변환 실패");
-              setImageFile(file); // 변환 실패 시 원본 파일 사용
-            }
-            setLoading(false);
-          },
-          file.type,
-          0.95
-        ); // 95% 품질로 인코딩
-      };
-
-      img.onerror = () => {
-        console.error("이미지 로딩 실패");
-        setImageFile(file); // 변환 실패 시 원본 파일 사용
-        setLoading(false);
-      };
-
-      img.src = e.target?.result as string;
-    };
-
-    reader.onerror = () => {
-      console.error("파일 읽기 실패");
-      setImageFile(file); // 변환 실패 시 원본 파일 사용
-      setLoading(false);
-    };
-
-    reader.readAsDataURL(file);
   };
 
   // 버튼 클릭 시 프로세스 시작
   const handleGenerateClick = async () => {
+    // 이미 로딩 중이면 무시
+    if (loading) return;
+
+    // 진행 중인 모든 처리 초기화
+    if (modelGenerated) {
+      resetProcess();
+      // 이미지가 없는 경우 여기서 종료
+      if (!imageFile) return;
+    }
+
     if (!imageFile) {
       setError("이미지를 먼저 선택해주세요.");
       return;
@@ -377,6 +286,7 @@ export default function PhotogrammetryViewer() {
 
     setError(null);
     setLoading(true);
+    // 진행률 완전 초기화
     setProgress(0);
 
     // WebSocket 연결 시도 및 연결 정보 가져오기
@@ -395,7 +305,6 @@ export default function PhotogrammetryViewer() {
       return;
     }
 
-    console.log("🚀 큐 확인 시작, 연결 정보:", result.connectionInfo);
     const formData = new FormData();
     formData.append("client_id", clientId);
     formData.append("image_file", imageFile!);
@@ -420,23 +329,25 @@ export default function PhotogrammetryViewer() {
     }
 
     setLoading(true);
-    setProgress(50); // 처리 중 진행률 시작점
+    setProgress(40); // 40%부터 시작
 
-    // 예상 처리 시간을 약 60초로 설정 (1분)
-    const estimatedProcessingTime = 60000; // 60초
-    const progressUpdateInterval = 500; // 0.5초마다 업데이트
+    // 예상 처리 시간을 30초로 단축 (실제 생성 시간이 빠른 경우)
+    const estimatedProcessingTime = 30000; // 30초
+    const progressUpdateInterval = 50; // 50ms마다 업데이트 (더 부드러운 진행을 위해)
     const progressStep =
-      (90 - 50) / (estimatedProcessingTime / progressUpdateInterval); // 50%에서 90%까지
+      (90 - 40) / (estimatedProcessingTime / progressUpdateInterval); // 40%에서 90%까지 계속 진행
 
-    // 로딩 바 진행을 위한 인터벌 설정
+    // 로딩 바 진행을 위한 인터벌 설정 - 누적 방식으로 구현
+    let currentProgress = 40;
     const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev < 90) {
-          // 소수점 제거하여 정수값만 사용
-          return Math.floor(prev + progressStep);
-        }
-        return prev;
-      });
+      if (currentProgress < 90) {
+        // 진행 속도를 조정 (더 빠르게 상승하도록)
+        const speedFactor = 1.5 - (currentProgress - 40) / 100; // 가속 계수 증가, 속도 감소 완화
+        const increment = progressStep * speedFactor;
+
+        currentProgress += increment;
+        setProgress(Math.min(90, Math.floor(currentProgress)));
+      }
     }, progressUpdateInterval);
 
     try {
@@ -445,49 +356,40 @@ export default function PhotogrammetryViewer() {
         body: formData,
       });
 
-      // 인터벌 정리
-      clearInterval(progressInterval);
-
+      // 이제 서버 응답이 왔을 때 인터벌 정리하지 않고 계속 진행
       if (!response.ok) {
+        clearInterval(progressInterval); // 오류 시에만 인터벌 정리
         throw new Error(`상태 코드: ${response.status}`);
       }
 
       const result = await response.json();
-      setProgress(90); // 거의 완료
 
       if (result.model_url || result.glb_url) {
         const url = result.model_url || result.glb_url;
         setModelUrl(url);
 
-        // 최종 10% 진행을 위한 부드러운 전환
-        const finalProgressInterval = setInterval(() => {
-          setProgress((prev) => {
-            if (prev < 100) {
-              return Math.min(100, prev + 1);
-            } else {
-              clearInterval(finalProgressInterval);
-              return 100;
-            }
-          });
-        }, 100);
+        // 서버 응답 시 진행률 가속
+        currentProgress = Math.max(currentProgress, 75); // 최소 75%로 설정
+        setProgress(Math.floor(currentProgress));
 
-        // 성공 시 소켓 연결 종료
-        closeWebSocket();
+        // 인터벌은 계속 유지하여 진행률이 자연스럽게 상승하도록 함
       } else {
+        clearInterval(progressInterval);
         setError(
           "모델 생성에 실패했습니다: " + (result.error || "알 수 없는 오류")
         );
         closeWebSocket();
       }
     } catch (error) {
-      // 인터벌 정리
       clearInterval(progressInterval);
-
       console.error("모델 생성 오류:", error);
       setError("모델 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
       closeWebSocket();
     } finally {
-      setLoading(false);
+      // 모델이 로드될 때까지 로딩 상태 유지
+      if (!modelUrl) {
+        setLoading(false);
+      }
     }
   };
 
@@ -504,15 +406,14 @@ export default function PhotogrammetryViewer() {
     try {
       setProgress(5); // 초기 진행률 표시
 
-      // 큐 위치가 변할 때마다 부드러운 진행률 업데이트를 위한 인터벌 설정
+      // 큐 상태 확인 중 진행률 서서히 증가 - 더 빠르게
       let currentProgress = 5;
       const progressInterval = setInterval(() => {
         if (currentProgress < 30) {
-          currentProgress += 0.5;
-          // 소수점 제거하여 정수값만 사용
+          currentProgress += 1; // 0.5에서 1로 증가
           setProgress(Math.floor(currentProgress));
         }
-      }, 500);
+      }, 100); // 더 빠른 업데이트
 
       const response = await fetch(
         `https://${SERVER_URL}/queue_status?connection_info=${encodeURIComponent(
@@ -532,31 +433,44 @@ export default function PhotogrammetryViewer() {
       if (result.status === "waiting") {
         setQueuePosition(result.position);
 
-        // 대기 위치에 따라 진행률 업데이트 (최대 30%까지만)
+        // 대기 위치에 따라 진행률 설정 (30-38% 범위)
         const progressValue = Math.floor(
-          Math.max(5, Math.min(30, 30 - result.position * 2))
+          Math.max(30, Math.min(38, 38 - result.position))
         );
         setProgress(progressValue);
 
+        // 다음 큐 확인 직전까지 진행률 서서히 증가 - 더 빠르게
+        let waitProgress = progressValue;
+        const waitInterval = setInterval(() => {
+          waitProgress += 0.5; // 0.2에서 0.5로 증가
+          if (waitProgress < progressValue + 5) {
+            // 3에서 5로 증가
+            setProgress(Math.floor(waitProgress));
+          } else {
+            clearInterval(waitInterval);
+          }
+        }, 100); // 더 빠른 업데이트
+
         const interval = 1000 + result.position * 200;
-        pollingTimeoutRef.current = setTimeout(
-          () => checkQueueStatus(formData),
-          interval
-        );
+        pollingTimeoutRef.current = setTimeout(() => {
+          clearInterval(waitInterval);
+          checkQueueStatus(formData);
+        }, interval);
       } else if (result.status === "ready") {
         setQueuePosition(null);
-        // 대기열 완료 후 40% 진행률로 부드럽게 전환
-        let transitionProgress = Math.min(30, Math.floor(currentProgress));
+
+        // 대기열 완료 후 40% 진행률로 빠르게 전환
+        let transitionProgress = Math.floor(currentProgress);
         const transitionInterval = setInterval(() => {
           if (transitionProgress < 40) {
-            transitionProgress += 1;
+            transitionProgress += 2; // 1에서 2로 증가 (더 빠르게)
             setProgress(transitionProgress);
           } else {
             clearInterval(transitionInterval);
             // 모델 생성 시작
             generateModel(formData);
           }
-        }, 100);
+        }, 50); // 더 빠른 업데이트
       } else {
         console.error("예상치 못한 큐 상태:", result.status);
         setError("큐 처리 중 오류가 발생했습니다.");
@@ -572,10 +486,10 @@ export default function PhotogrammetryViewer() {
   // 모델 URL -> Blob URL 변환
   useEffect(() => {
     if (modelUrl) {
-      console.log("🔄 모델 URL 변환 시작:", modelUrl);
-      setProgress(95); // 모델 다운로드 시작
+      // 모델 URL을 받았으므로 진행률 90% 이상으로 설정
+      setProgress(92);
 
-      // 소켓 연결 종료 - 모델 URL을 받았으므로 더 이상 필요 없음
+      // 소켓 연결 종료
       closeWebSocket();
 
       fetch(modelUrl)
@@ -587,32 +501,47 @@ export default function PhotogrammetryViewer() {
         })
         .then((blob) => {
           if (blobUrl) URL.revokeObjectURL(blobUrl);
-          const newBlobUrl = URL.createObjectURL(blob);
-          console.log("✅ Blob URL 생성 완료:", newBlobUrl);
-          setBlobUrl(newBlobUrl);
-          setProgress(100); // 완료
-          setModelGenerated(true); // 모델이 성공적으로 생성됨
 
-          // 이미지 파일명을 기반으로 모델 타이틀 생성
-          if (imageFile) {
-            const fileName = imageFile.name.split(".")[0];
-            setModelTitle(`AI_3D_${fileName}_${Date.now()}`);
-          } else {
-            setModelTitle(`AI_3D_Model_${Date.now()}`);
-          }
+          // 모델 로드 완료 후 진행률 100%로 빠르게 증가
+          let finalProgress = 92;
+          const finalProgressInterval = setInterval(() => {
+            finalProgress += 1; // 0.5에서 1로 증가 (더 빠르게)
+            if (finalProgress < 100) {
+              setProgress(Math.floor(finalProgress));
+            } else {
+              clearInterval(finalProgressInterval);
+              setProgress(100);
 
-          // 모델 Blob 저장 (나중에 S3에 업로드하기 위해)
-          modelBlobRef.current = blob;
+              // 모델이 로드되면 Blob URL 생성
+              const newBlobUrl = URL.createObjectURL(blob);
+              setBlobUrl(newBlobUrl);
 
-          // 약간의 지연 후 모달 표시 (Blob URL이 완전히 준비되도록)
-          setTimeout(() => {
-            console.log("🖼️ 모달 표시");
-            setShowModal(true);
-          }, 500);
+              // 모델이 성공적으로 생성됨
+              setModelGenerated(true);
+
+              // 이미지 파일명을 기반으로 모델 타이틀 생성
+              if (imageFile) {
+                const fileName = imageFile.name.split(".")[0];
+                setModelTitle(`AI_3D_${fileName}_${Date.now()}`);
+              } else {
+                setModelTitle(`AI_3D_Model_${Date.now()}`);
+              }
+
+              // 모델 Blob 저장 (나중에 S3에 업로드하기 위해)
+              modelBlobRef.current = blob;
+
+              // 진행률이 100%에 도달하면 모달 표시
+              setTimeout(() => {
+                setShowModal(true);
+                setLoading(false);
+              }, 300); // 500ms에서 300ms로 단축
+            }
+          }, 50); // 100ms에서 50ms로 더 빠른 업데이트
         })
         .catch((err) => {
           console.error("❌ Blob 변환 오류:", err);
           setError("3D 모델을 불러오는데 실패했습니다.");
+          setLoading(false);
         });
     }
   }, [modelUrl, imageFile]);
@@ -637,12 +566,13 @@ export default function PhotogrammetryViewer() {
       const userId = userData.getMyInfo.id;
       const fileName = `AI_3D_Models/${userId}/${modelTitle}.glb`;
 
-      // S3에 모델 업로드
+      // S3에 모델 업로드 (public-read 권한으로 저장)
       const url = await uploadFileToS3(
         modelBlobRef.current,
         fileName,
         "model/gltf-binary",
-        (progress) => setS3UploadProgress(progress)
+        (progress) => setS3UploadProgress(progress),
+        "public-read" as ObjectCannedACL
       );
 
       setS3ModelUrl(url);
@@ -670,17 +600,42 @@ export default function PhotogrammetryViewer() {
   // 프로세스 리셋
   const resetProcess = () => {
     console.log("🔄 프로세스 초기화");
+
+    // 진행 중인 인터벌 및 타임아웃 정리
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
+    }
+
+    // 모든 진행 중인 타이머 정리 (TypeScript 타입 오류 수정)
+    const highestTimeoutId = window.setTimeout(() => {}, 0);
+    for (let i = 1; i < highestTimeoutId; i++) {
+      window.clearTimeout(i);
+    }
+
+    // WebSocket 연결 종료
     closeWebSocket();
+
+    // 상태 완전 초기화
     setImageFile(null);
     setLoading(false);
     setModelUrl(null);
-    if (blobUrl) URL.revokeObjectURL(blobUrl);
-    setBlobUrl(null);
+
+    // Blob URL 정리
+    if (blobUrl) {
+      URL.revokeObjectURL(blobUrl);
+      setBlobUrl(null);
+    }
+
+    // 기타 상태 초기화
     setError(null);
     setProgress(0);
     setQueuePosition(null);
     setShowModal(false);
-    setModelGenerated(false); // 모델 생성 상태 초기화
+    setModelGenerated(false);
+
+    // 페이지 스크롤 맨 위로 이동 (선택 사항)
+    window.scrollTo(0, 0);
   };
 
   // ResultModal 컴포넌트에 전달할 추가 props 정의
@@ -775,7 +730,9 @@ export default function PhotogrammetryViewer() {
           {loading && !error && (
             <>
               <div
-                className="h-2 bg-blue-500"
+                className={`h-2 bg-blue-500 progress-bar-${Math.floor(
+                  progress
+                )}`}
                 style={{ width: `${progress}%`, transition: "width 0.3s ease" }}
               ></div>
               <div className="text-center text-sm text-gray-700 py-1">
@@ -798,17 +755,17 @@ export default function PhotogrammetryViewer() {
       )}
 
       {!imageFile ? (
-        <div className="p-6 rounded-xl bg-white shadow-lg flex flex-col gap-6 w-full max-w-md h-full max-h-[300px] border border-gray-200">
+        <div className="p-6 rounded-xl bg-[rgba(0,0,0,0.3)] shadow-lg flex flex-col gap-4 w-full max-w-md border border-gray-700 h-full max-h-[300px]">
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-gray-800">
+            <h3 className="text-lg font-semibold text-white">
               AI 3D 모델 생성
             </h3>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-gray-300 text-sm mt-1">
               사진 한 장으로 3D 모델을 만들어보세요
             </p>
           </div>
 
-          <label className="border-2 border-dashed border-blue-300 rounded-lg text-gray-500 cursor-pointer hover:text-blue-600 hover:border-blue-500 bg-blue-50 flex flex-col items-center justify-center p-8 transition-all duration-200 hover:bg-blue-100">
+          <label className="border-2 border-dashed border-blue-300 rounded-lg text-gray-300 cursor-pointer hover:text-blue-300 hover:border-blue-500 bg-[rgba(0,0,0,0.2)] flex flex-col items-center justify-center p-8 transition-all duration-200 ">
             <FiUpload className="text-4xl text-blue-400 mb-3" />
             <span className="font-medium">이미지 업로드</span>
             <span className="text-xs text-gray-500 mt-1">
@@ -863,7 +820,7 @@ export default function PhotogrammetryViewer() {
 
           <button
             onClick={modelGenerated ? handleViewModel : handleGenerateClick}
-            disabled={loading}
+            disabled={loading || !imageFile}
             className={`px-4 py-2 ${
               modelGenerated
                 ? "bg-blue-600 hover:bg-blue-700"

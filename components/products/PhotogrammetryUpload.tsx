@@ -9,6 +9,8 @@ import { UPLOAD_PRODUCT_MUTATION } from "@/app/api/product/mutation";
 import ReactConfetti from "react-confetti";
 import { FaFolderOpen } from "react-icons/fa";
 import { AiFillPicture } from "react-icons/ai";
+import { FiUpload, FiRefreshCw, FiX, FiImage, FiCheck } from "react-icons/fi";
+import { MdError } from "react-icons/md";
 
 // S3 클라이언트 생성 (주의: 클라이언트에서 secret key 사용은 개발/테스트 환경에서만 사용)
 const s3Client = new S3Client({
@@ -56,6 +58,7 @@ const PhotogrammetryUpload: React.FC = () => {
   const [uploadComplete, setUploadComplete] = useState<boolean>(false);
   const [title, setTitle] = useState<string>("");
   const [showFanfare, setShowFanfare] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const { data: userData } = useUser();
   const userId = userData?.getMyInfo?.id || "anonymous";
 
@@ -65,7 +68,7 @@ const PhotogrammetryUpload: React.FC = () => {
     },
     onError: (error) => {
       console.error("GraphQL mutation error", error);
-      alert("모델 생성 중 에러가 발생했습니다.");
+      setError("모델 생성 중 에러가 발생했습니다.");
     },
   });
 
@@ -76,37 +79,63 @@ const PhotogrammetryUpload: React.FC = () => {
       setShowFanfare(true);
       timer = setTimeout(() => {
         // 초기 상태로 리셋
-        setFiles([]);
-        setProgress(0);
-        setUploadComplete(false);
-        setShowFanfare(false);
-        setTitle("");
+        resetForm();
       }, 5000);
     }
-    return () => clearTimeout(timer);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [uploadComplete]);
 
+  const resetForm = () => {
+    setFiles([]);
+    setProgress(0);
+    setUploadComplete(false);
+    setShowFanfare(false);
+    setTitle("");
+    setError(null);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(Array.from(e.target.files));
+    if (e.target.files && e.target.files.length > 0) {
+      // 기존 로직을 복원하되 파일 타입 검사 추가
+      const selectedFiles = Array.from(e.target.files);
+
+      // 파일 타입 검사
+      const invalidFiles = selectedFiles.filter(
+        (file) => !file.type.includes("image/")
+      );
+
+      if (invalidFiles.length > 0) {
+        setError("이미지 파일만 업로드 가능합니다.");
+        return;
+      }
+
+      setError(null);
+      setFiles(selectedFiles);
     }
   };
 
   const handleUpload = async () => {
     if (files.length === 0) {
-      alert("업로드할 파일을 선택해주세요.");
+      setError("업로드할 파일을 선택해주세요.");
       return;
     }
-    if (!title) {
-      alert("타이틀을 입력해주세요.");
+
+    if (!title.trim()) {
+      setError("타이틀을 입력해주세요.");
       return;
     }
+
+    setError(null);
     setUploading(true);
     setUploadComplete(false);
     setProgress(0);
 
     try {
       const uploadedUrls: string[] = [];
+
+      // 각 파일마다 진행률 추적 (기존 기능 유지)
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const fileExtension = file.type === "image/png" ? "png" : "jpg";
@@ -115,14 +144,22 @@ const PhotogrammetryUpload: React.FC = () => {
           relativePath && relativePath !== ""
             ? `${userId}/${title}/${relativePath}`
             : `${userId}/${title}/${i + 1}.${fileExtension}`;
-        const url = await uploadFileToS3(file, fileName, (prog) => {
-          const overallProgress = ((i + prog / 100) / files.length) * 100;
+
+        // 원래 업로드 로직 복원
+        const url = await uploadFileToS3(file, fileName, (fileProgress) => {
+          // 개별 파일 진행률 처리 (원래 방식)
+          const overallProgress =
+            ((i + fileProgress / 100) / files.length) * 100;
           setProgress(Math.round(overallProgress));
         });
+
         uploadedUrls.push(url);
-        setProgress(Math.round(((i + 1) / files.length) * 100));
       }
 
+      // 업로드 완료 표시
+      setProgress(95);
+
+      // GraphQL 뮤테이션 실행 (원래 로직)
       await uploadMutation({
         variables: {
           title,
@@ -130,78 +167,159 @@ const PhotogrammetryUpload: React.FC = () => {
           alignment: true,
         },
       });
+
+      // 모든 처리 완료
+      setProgress(100);
       setUploadComplete(true);
     } catch (error) {
       console.error("Upload failed:", error);
-      alert("업로드에 실패했습니다. 다시 시도해주세요.");
+      setError("업로드에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="relative p-4 rounded-lg bg-[rgba(0,0,0,0.3)] shadow-md w-full max-w-md">
-      {/* Confetti 효과 */}
-      {showFanfare && <ReactConfetti recycle={false} numberOfPieces={500} />}
-      {!uploadComplete ? (
-        <>
-          {/* 타이틀 입력 */}
-          <input
-            type="text"
-            placeholder="타이틀 입력"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mb-4 p-2  rounded w-full bg-transparent outline-none focus:border-transparent focus:ring-white text-white"
-          />
-          {/* 커스텀 파일 입력 UI */}
-          <div className="mb-4 min-w-52">
-            <label
-              htmlFor="folder-input"
-              className="px-6 border-2 rounded-md text-gray-500 cursor-pointer hover:text-white bg-[rgba(0,0,0,0.4)] border-dashed flex flex-col items-center justify-center p-6 min-w-52 transition"
-            >
-              <AiFillPicture className="text-4xl text-gray-600  mb-2" />
+    <div className="flex flex-col items-center gap-4 w-full max-w-md">
+      {/* 상태 표시 바 */}
+      {(uploading || error) && (
+        <div className="w-full rounded-lg overflow-hidden bg-gray-200">
+          {uploading && !error && (
+            <>
+              <div
+                className={`h-2 bg-blue-500 progress-bar-${Math.floor(
+                  progress
+                )}`}
+                style={{ width: `${progress}%`, transition: "width 0.3s ease" }}
+              ></div>
+              <div className="text-center text-sm text-gray-700 py-1">
+                {progress < 100
+                  ? `업로드 중... ${Math.floor(progress)}%`
+                  : "완료됨!"}
+              </div>
+            </>
+          )}
 
-              <span>사진 불러오기(최소 10장)</span>
-              {files.length > 0 && (
-                <span className="mt-2 text-green-600">
-                  {files.length}개의 파일 선택됨
-                </span>
-              )}
-            </label>
-            <input
-              id="folder-input"
-              type="file"
-              multiple
-              onChange={handleFileChange}
-              className="hidden"
-            />
+          {error && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-2 flex items-center">
+              <MdError className="text-red-500 mr-2" size={20} />
+              <span>{error}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 메인 UI 컨테이너 */}
+      {!uploadComplete ? (
+        <div className="p-6 rounded-xl bg-[rgba(0,0,0,0.3)] shadow-lg flex flex-col gap-4 w-full max-w-md border border-gray-700 h-full max-h-[300px]">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-white">
+              Photogrammetry 생성
+            </h3>
+            <p className="text-gray-300 text-sm mt-1">
+              다수의 이미지로 3D 모델을 생성합니다
+            </p>
           </div>
+
+          {/* 타이틀 입력 */}
+          {/* <div className="relative">
+            <input
+              type="text"
+              placeholder="타이틀 입력"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full p-2 rounded-md bg-transparent border border-blue-300 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div> */}
+
+          {/* 파일 업로드 영역 */}
+          {files.length === 0 ? (
+            <label className="border-2 border-dashed border-blue-300 rounded-lg text-gray-300 cursor-pointer hover:text-blue-300 hover:border-blue-500 bg-[rgba(0,0,0,0.2)] flex flex-col items-center justify-center p-8 transition-all duration-200">
+              <FiUpload className="text-4xl text-blue-400 mb-3" />
+              <span className="font-medium">이미지 업로드</span>
+              <span className="text-xs text-gray-500  mt-1">
+                JPG, PNG (여러 장의 이미지 선택)
+              </span>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+          ) : (
+            <div className="border border-blue-300 rounded-lg p-4 bg-[rgba(0,0,0,0.2)]">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <FiImage className="text-blue-500 mr-2" size={20} />
+                  <span className="text-white font-medium">선택된 이미지</span>
+                </div>
+                <button
+                  onClick={resetForm}
+                  className="text-gray-400 hover:text-red-500"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-green-500 font-bold">
+                  {files.length}장
+                </span>
+                <span className="text-gray-400 text-sm">
+                  {files.length >= 10 ? (
+                    <span className="text-green-500 flex items-center">
+                      <FiCheck size={16} className="mr-1" /> 충분한 이미지
+                    </span>
+                  ) : (
+                    <span className="text-yellow-500">10장 이상 권장</span>
+                  )}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* 업로드 버튼 */}
           <button
             onClick={handleUpload}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full transition"
-            disabled={uploading}
+            disabled={uploading || files.length === 0}
+            className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center justify-center gap-2 font-medium disabled:bg-gray-600 disabled:cursor-not-allowed"
           >
-            Photogrammetry 생성
+            {uploading ? (
+              <>
+                <FiRefreshCw className="animate-spin" />
+                처리 중...
+              </>
+            ) : (
+              <>Photogrammetry 생성</>
+            )}
           </button>
-          {/* 진행률 표시 */}
-          {uploading && (
-            <div className="mt-4">
-              <div className="w-full bg-gray-200 rounded-full h-4">
-                <div
-                  className="bg-green-500 h-4 rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              <span className="text-sm">{progress}%</span>
-            </div>
-          )}
-        </>
+        </div>
       ) : (
-        <div className="mt-4 text-center">
-          <div className="animate-bounce text-green-600 font-bold text-lg">
-            3D 모델 생성이 완료되었습니다!
+        <div className="p-6 rounded-xl bg-[rgba(0,0,0,0.3)] shadow-lg flex flex-col gap-4 w-full max-w-md border border-green-700">
+          <div className="text-center">
+            <div className="animate-bounce">
+              <FiCheck className="text-green-500 text-4xl mx-auto mb-2" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">
+              3D 모델 생성 요청 완료
+            </h3>
+            <p className="text-gray-300 text-sm mt-2">
+              요청이 처리되었습니다. 생성된 모델은 곧 확인하실 수 있습니다.
+            </p>
           </div>
+
+          <button
+            onClick={resetForm}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg mt-4 transition"
+          >
+            새 모델 생성하기
+          </button>
+
+          {/* Confetti 효과 */}
+          {showFanfare && (
+            <ReactConfetti recycle={false} numberOfPieces={500} />
+          )}
         </div>
       )}
     </div>

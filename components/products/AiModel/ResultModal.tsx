@@ -447,7 +447,7 @@ export default function ResultModal({
       >
         {/* 헤더 */}
         <div className="p-4 border-b flex justify-between items-center">
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex flex-col lg:flex-row items-center gap-2 flex-1">
             <h3 className="text-xl font-semibold text-gray-800">
               AI 3D 모델 결과
             </h3>

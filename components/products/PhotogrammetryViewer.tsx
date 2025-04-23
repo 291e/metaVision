@@ -18,8 +18,11 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import useUser from "@/app/hooks/useUser";
 import { ObjectCannedACL } from "@aws-sdk/client-s3";
+import { useQuery, useMutation } from "@apollo/client";
+import { getCreditBalance, useCredits } from "@/app/api/payment/api";
 
 const SERVER_URL = "realserver.metabank360.com:5100";
+const CREDIT_COST = 10; // 모델 생성당 필요한 크레딧
 
 // S3 클라이언트 생성
 const s3Client = new S3Client({
@@ -65,6 +68,7 @@ const uploadFileToS3 = async (
 
 export default function PhotogrammetryViewer() {
   const { data: userData } = useUser();
+  const [creditBalance, setCreditBalance] = useState<number>(0);
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [clientId] = useState(`user_${Date.now()}`);
   const [connectionInfo, setConnectionInfo] = useState<string | null>(null);
@@ -88,6 +92,40 @@ export default function PhotogrammetryViewer() {
   const modelRef = useRef<THREE.Group | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const modelBlobRef = useRef<Blob | null>(null); // 모델 블롭 참조 저장
+
+  // 크레딧 잔액 조회
+  useEffect(() => {
+    const fetchCreditBalance = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        console.log(
+          "토큰 형식:",
+          token?.split(".").length === 3 ? "JWT" : "일반 문자열"
+        );
+
+        if (!token) {
+          console.error("토큰이 없습니다.");
+          return;
+        }
+
+        const response = await getCreditBalance(token);
+        console.log("크레딧 조회 응답:", response);
+
+        if (!response.success) {
+          throw new Error(
+            response.message || "크레딧 잔액 조회에 실패했습니다."
+          );
+        }
+        setCreditBalance(response.balance);
+      } catch (error) {
+        console.error("크레딧 잔액 조회 실패:", error);
+      }
+    };
+
+    if (userData?.getMyInfo) {
+      fetchCreditBalance();
+    }
+  }, [userData]);
 
   // WebSocket 연결 설정
   useEffect(() => {
@@ -269,49 +307,88 @@ export default function PhotogrammetryViewer() {
 
   // 버튼 클릭 시 프로세스 시작
   const handleGenerateClick = async () => {
-    // 이미 로딩 중이면 무시
-    if (loading) return;
-
-    // 진행 중인 모든 처리 초기화
-    if (modelGenerated) {
-      resetProcess();
-      // 이미지가 없는 경우 여기서 종료
-      if (!imageFile) return;
-    }
-
-    if (!imageFile) {
-      setError("이미지를 먼저 선택해주세요.");
+    if (!userData?.getMyInfo) {
+      alert("로그인이 필요합니다.");
       return;
     }
 
-    setError(null);
-    setLoading(true);
-    // 진행률 완전 초기화
-    setProgress(0);
+    const token = localStorage.getItem("token");
+    console.log("현재 토큰:", token); // 토큰 확인용 로그
 
-    // WebSocket 연결 시도 및 연결 정보 가져오기
-    const result = await initWebSocket();
-
-    if (!result.connected) {
-      setLoading(false);
-      setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.");
+    if (!token) {
+      alert("로그인이 필요합니다.");
       return;
     }
 
-    if (!result.connectionInfo) {
-      setLoading(false);
-      setError("서버 연결 정보를 가져오지 못했습니다. 다시 시도해주세요.");
-      closeWebSocket();
+    if (creditBalance < CREDIT_COST) {
+      alert(
+        `크레딧이 부족합니다. 현재 ${creditBalance} 크레딧, 필요 ${CREDIT_COST} 크레딧`
+      );
       return;
     }
 
-    const formData = new FormData();
-    formData.append("client_id", clientId);
-    formData.append("image_file", imageFile!);
-    formData.append("connection_info", result.connectionInfo);
+    try {
+      // 크레딧 차감
+      const creditResponse = await useCredits(
+        CREDIT_COST,
+        "AI 3D 모델 생성",
+        token
+      );
+      console.log("크레딧 차감 응답:", creditResponse); // 응답 확인용 로그
 
-    // 큐 상태 확인
-    await checkQueueStatus(formData);
+      if (!creditResponse.success) {
+        throw new Error(
+          creditResponse.message || "크레딧 차감에 실패했습니다."
+        );
+      }
+      setCreditBalance(creditResponse.credits);
+
+      // 모델 생성 로직
+      if (loading) return;
+
+      if (modelGenerated) {
+        resetProcess();
+        if (!imageFile) return;
+      }
+
+      if (!imageFile) {
+        setError("이미지를 먼저 선택해주세요.");
+        return;
+      }
+
+      setError(null);
+      setLoading(true);
+      setProgress(0);
+
+      const result = await initWebSocket();
+
+      if (!result.connected) {
+        setLoading(false);
+        setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+
+      if (!result.connectionInfo) {
+        setLoading(false);
+        setError("서버 연결 정보를 가져오지 못했습니다. 다시 시도해주세요.");
+        closeWebSocket();
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("client_id", clientId);
+      formData.append("image_file", imageFile!);
+      formData.append("connection_info", result.connectionInfo);
+
+      await checkQueueStatus(formData);
+    } catch (error) {
+      console.error("Error:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "모델 생성 중 오류가 발생했습니다."
+      );
+    }
   };
 
   // 모델 생성 요청
@@ -656,6 +733,33 @@ export default function PhotogrammetryViewer() {
     setShowModal(true);
   };
 
+  // 모델 생성 완료 후 크레딧 차감
+  useEffect(() => {
+    if (modelGenerated) {
+      // 크레딧 잔액 새로고침
+      const fetchCreditBalance = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            console.error("토큰이 없습니다.");
+            return;
+          }
+
+          const response = await getCreditBalance(token);
+          if (!response.success) {
+            throw new Error(
+              response.message || "크레딧 잔액 조회에 실패했습니다."
+            );
+          }
+          setCreditBalance(response.credits);
+        } catch (error) {
+          console.error("크레딧 잔액 조회 실패:", error);
+        }
+      };
+      fetchCreditBalance();
+    }
+  }, [modelGenerated]);
+
   // 디버깅용 - 모든 상태 로그 (제거)
   useEffect(() => {
     // 상세 로그 삭제
@@ -724,6 +828,21 @@ export default function PhotogrammetryViewer() {
 
   return (
     <div className="flex flex-col items-center gap-4 w-full max-w-md">
+      {/* 크레딧 정보 표시 */}
+      {userData?.getMyInfo && (
+        <div className="w-full bg-blue-50 p-4 rounded-lg">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700">보유 크레딧</span>
+            <span className="font-semibold text-blue-600">
+              {creditBalance || 0} 크레딧
+            </span>
+          </div>
+          <div className="text-sm text-gray-500 mt-1">
+            모델 생성에는 {CREDIT_COST}크레딧이 필요합니다.
+          </div>
+        </div>
+      )}
+
       {/* 상태 표시 바 */}
       {(loading || error) && (
         <div className="w-full rounded-lg overflow-hidden bg-gray-200">

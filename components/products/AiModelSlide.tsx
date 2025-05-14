@@ -21,6 +21,7 @@ interface S3Model {
   size?: number | string;
   viewerUrl?: string;
   modelId?: string;
+  thumbnail?: string;
 }
 
 const AiModelSlide: React.FC = () => {
@@ -114,6 +115,7 @@ const AiModelSlide: React.FC = () => {
           viewerUrl:
             model.viewerUrl || `/viewer?model=${encodeURIComponent(model.url)}`,
           modelId: model.modelId || model.key,
+          thumbnail: model.thumbnail,
         }));
 
         setS3Models(formattedModels);
@@ -318,9 +320,50 @@ const AiModelSlide: React.FC = () => {
             className="bg-white rounded-lg overflow-hidden shadow-md h-64 flex flex-col"
           >
             <div className="relative h-40 bg-gray-100">
-              <div className="absolute inset-0 flex items-center justify-center bg-blue-100">
-                <FiBox className="text-blue-500" size={40} />
-              </div>
+              {model.thumbnail && model.thumbnail.trim() !== "" ? (
+                <div className="relative w-full h-full">
+                  <Image
+                    src={model.thumbnail}
+                    alt={model.title || "AI 3D 모델 썸네일"}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    unoptimized={true}
+                    loading="lazy"
+                    onError={(e) => {
+                      // 이미지 로드 실패 시 기본 아이콘으로 대체
+                      console.log("썸네일 이미지 로드 실패:", model.thumbnail);
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.classList.add(
+                          "flex",
+                          "items-center",
+                          "justify-center",
+                          "bg-blue-100"
+                        );
+
+                        // 이미 아이콘이 있는지 확인
+                        const existingIcon =
+                          parent.querySelector(".fallback-icon");
+                        if (!existingIcon) {
+                          const iconElement = document.createElement("div");
+                          iconElement.className =
+                            "text-blue-500 flex items-center justify-center fallback-icon";
+                          iconElement.innerHTML =
+                            '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>';
+                          parent.appendChild(iconElement);
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-blue-100">
+                  <FiBox className="text-blue-500" size={40} />
+                </div>
+              )}
               <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => handleModelClick(model)}

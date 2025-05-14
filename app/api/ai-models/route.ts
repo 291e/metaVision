@@ -257,10 +257,13 @@ export async function POST(request: Request) {
     let imageType = ""; // 이미지 타입 추가
 
     const contentType = request.headers.get("content-type") || "";
+    console.log("요청 컨텐츠 타입:", contentType);
 
     if (contentType.includes("application/json")) {
       // JSON 형식 처리
       const jsonData = await request.json();
+      console.log("JSON 데이터 수신:", JSON.stringify(jsonData, null, 2));
+
       userId = jsonData.userId;
       modelTitle = jsonData.modelTitle;
 
@@ -275,6 +278,7 @@ export async function POST(request: Request) {
 
       // 원본 이미지 데이터 처리
       if (jsonData.imageData) {
+        console.log("원본 이미지 데이터 발견 (JSON)");
         const imageBuffer = Buffer.from(jsonData.imageData, "base64");
         originalImage = imageBuffer;
         imageName = jsonData.imageName || `image_${Date.now()}.jpg`;
@@ -283,7 +287,13 @@ export async function POST(request: Request) {
     } else {
       // FormData 형식 처리
       const formData = await request.formData();
+      console.log("FormData 키:", Array.from(formData.keys()));
+
       modelFile = formData.get("modelFile") as File;
+      // originalImage가 전송되었는지 확인
+      const hasOriginalImage = formData.has("originalImage");
+      console.log("원본 이미지 필드 존재:", hasOriginalImage);
+
       originalImage = formData.get("originalImage") as File; // 원본 이미지 가져오기
       userId = formData.get("userId") as string;
       modelTitle = formData.get("modelTitle") as string;
@@ -295,8 +305,35 @@ export async function POST(request: Request) {
       }
 
       if (originalImage) {
+        console.log(
+          "원본 이미지 데이터 발견 (FormData):",
+          originalImage.name,
+          originalImage.type
+        );
         imageName = (originalImage as File).name;
         imageType = (originalImage as File).type || "image/jpeg";
+      } else {
+        console.log("원본 이미지 데이터 없음 (FormData)");
+
+        // 대체 필드 이름 시도
+        const alternativeFields = [
+          "image",
+          "photo",
+          "thumbnail",
+          "thumbnailImage",
+          "imageFile",
+        ];
+        for (const field of alternativeFields) {
+          if (formData.has(field)) {
+            console.log(`대체 이미지 필드 발견: ${field}`);
+            originalImage = formData.get(field) as File;
+            if (originalImage) {
+              imageName = (originalImage as File).name;
+              imageType = (originalImage as File).type || "image/jpeg";
+              break;
+            }
+          }
+        }
       }
     }
 

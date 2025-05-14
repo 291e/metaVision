@@ -24,7 +24,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="pt-[80px] lg:pt-[94px] bg-white flex flex-col gap-10 text-black pb-20">
-      <div className="relative h-[450px] lg:h-[518px] transition-all">
+      <div className="relative h-[500px] lg:h-[518px] transition-all">
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-5 p-5 md:flex-row md:items-center md:gap-40">
           {/* 768px 이상에서는 두 컴포넌트 모두 표시 */}
           <div className="hidden lg:block w-full max-w-md">

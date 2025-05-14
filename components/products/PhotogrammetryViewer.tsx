@@ -754,8 +754,20 @@ export default function PhotogrammetryViewer() {
 
       formData.append("modelFile", fileToUpload, fileName);
 
+      // 원본 이미지 추가
+      if (imageFile) {
+        console.log("원본 이미지 정보:", {
+          name: imageFile.name,
+          type: imageFile.type,
+          size: imageFile.size,
+        });
+        formData.append("originalImage", imageFile, imageFile.name);
+      } else {
+        console.log("원본 이미지가 없습니다.");
+      }
+
       // API 엔드포인트를 통해 업로드
-      console.log("업로드 시작:", fileName);
+      console.log("업로드 시작:", fileName, "원본 이미지 포함:", !!imageFile);
 
       // 진행률 표시를 위한 가상 진행 시뮬레이션
       const progressInterval = setInterval(() => {
@@ -995,12 +1007,17 @@ export default function PhotogrammetryViewer() {
   }, [loading, wsConnected]);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-md">
+    <div className="flex flex-col items-center w-full max-w-md gap-4">
       {/* 크레딧 정보 표시 */}
       {userData?.getMyInfo && (
         <div className="w-full bg-blue-50 p-4 rounded-lg">
           <div className="flex justify-between items-center">
-            <span className="text-gray-700">보유 크레딧</span>
+            <div className="flex items-center gap-2">
+              <span className="text-blue-500 max-w-[80px] overflow-hidden">
+                {userData.getMyInfo.email}
+              </span>
+              <span className="text-gray-700">보유 크레딧</span>
+            </div>
             <span className="font-semibold text-blue-600">
               {creditBalance || 0} 크레딧
             </span>
@@ -1042,7 +1059,7 @@ export default function PhotogrammetryViewer() {
       )}
 
       {!imageFile ? (
-        <div className="px-6 py-4 rounded-xl bg-[rgba(0,0,0,0.3)] shadow-lg flex flex-col gap-4 w-full max-w-md border border-gray-700 h-full max-h-[300px]">
+        <div className="px-6 py-2 md:py-4 rounded-xl bg-[rgba(0,0,0,0.3)] shadow-lg flex flex-col gap-4 w-full max-w-md border border-gray-700 h-full max-h-[300px]">
           <div className="text-center">
             <h3 className="text-lg font-semibold text-white">
               AI 3D 모델 생성
@@ -1058,7 +1075,7 @@ export default function PhotogrammetryViewer() {
               isDragging
                 ? "border-blue-500 bg-[rgba(0,0,255,0.05)]"
                 : "border-blue-300 bg-[rgba(0,0,0,0.2)]"
-            } rounded-lg text-gray-300 cursor-pointer hover:text-blue-300 hover:border-blue-500 flex flex-col items-center justify-center p-8 transition-all duration-200`}
+            } rounded-lg text-gray-300 cursor-pointer hover:text-blue-300 hover:border-blue-500 flex flex-col items-center justify-center p-4 lg:p-8 transition-all duration-200`}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -1066,12 +1083,14 @@ export default function PhotogrammetryViewer() {
           >
             <FiUpload className="text-4xl text-blue-400 mb-3" />
             <span className="font-medium">이미지 업로드</span>
+
             <span className="text-xs text-gray-500 mt-1">
               JPG, PNG (10MB 이하)
             </span>
             <span className="text-xs text-gray-400 mt-1">
               파일을 드래그하여 놓거나 클릭하세요
             </span>
+
             <input
               type="file"
               accept="image/*"

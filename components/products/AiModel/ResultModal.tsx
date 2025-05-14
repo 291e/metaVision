@@ -11,8 +11,45 @@ import {
   FiSave,
   FiPlay,
   FiPause,
+  FiDownload,
 } from "react-icons/fi";
 import { MdError, MdRestartAlt, Md3dRotation } from "react-icons/md";
+
+// 공유하기 함수를 다운로드 함수로 변경
+const handleDownload = (blobUrl: string, filename: string = "3d_model.glb") => {
+  if (!window.confirm("3D 모델 파일을 다운로드 하시겠습니까?")) {
+    return;
+  }
+
+  try {
+    // fetch를 통해 blobUrl에서 데이터 가져오기
+    fetch(blobUrl)
+      .then((response) => response.blob())
+      .then((blob) => {
+        // Blob URL 생성
+        const url = window.URL.createObjectURL(blob);
+
+        // 다운로드 링크 생성 및 클릭
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+
+        // 클린업
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      })
+      .catch((error) => {
+        console.error("다운로드 중 오류 발생:", error);
+        alert("다운로드 중 오류가 발생했습니다.");
+      });
+  } catch (error) {
+    console.error("다운로드 버튼 클릭 처리 중 오류:", error);
+    alert("다운로드를 시작할 수 없습니다.");
+  }
+};
 
 interface ResultModalProps {
   blobUrl: string;
@@ -92,29 +129,23 @@ export default function ResultModal({
     }
   };
 
-  // 공유 핸들러
-  const handleShare = () => {
-    if (!window.confirm("이 모델을 공유하시겠습니까?")) {
-      return;
-    }
-    // 공유 기능 구현
-    alert("공유 기능은 준비 중입니다.");
+  // handleShare 함수를 handleDownload 함수로 대체
+  const handleModelDownload = () => {
+    // 모델 제목이 있으면 해당 제목으로, 없으면 기본 파일명 사용
+    const filename = modelTitle ? `${modelTitle}.glb` : "3d_model.glb";
+    handleDownload(blobUrl, filename);
   };
 
   // 배경 클릭 시 모달 닫기 (모달 내부 클릭은 이벤트 전파 중지)
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
-      if (window.confirm("모델 보기를 종료하시겠습니까?")) {
-        onClose();
-      }
+      onClose();
     }
   };
 
   // 모달 닫기 핸들러
   const handleClose = () => {
-    if (window.confirm("모델 보기를 종료하시겠습니까?")) {
-      onClose();
-    }
+    onClose();
   };
 
   // 3D 뷰어 리소스 정리
@@ -562,9 +593,7 @@ export default function ResultModal({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (window.confirm("모델 보기를 종료하시겠습니까?")) {
-          onClose();
-        }
+        onClose();
       }
     };
 
@@ -688,12 +717,12 @@ export default function ResultModal({
               </button>
             )}
             <button
-              onClick={handleShare}
+              onClick={handleModelDownload}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition"
-              title="공유하기"
+              title="다운로드"
             >
-              <FiShare2 size={18} />
-              <span className="hidden md:block">공유하기</span>
+              <FiDownload size={18} />
+              <span className="hidden md:block">다운로드</span>
             </button>
           </div>
         </div>

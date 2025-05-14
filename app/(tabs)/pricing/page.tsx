@@ -18,10 +18,27 @@ interface CreditPackage {
   isPopular?: boolean;
 }
 
+// 금액에 따른 크레딧 계산 함수
+const calculateCredits = (amount: number): number => {
+  switch (amount) {
+    case 10000:
+      return 100;
+    case 30000:
+      return 350;
+    case 50000:
+      return 650;
+    case 100000:
+      return 1500;
+    default:
+      // 정해진 금액이 아닌 경우 1000원당 10크레딧으로 계산
+      return Math.floor(amount / 100);
+  }
+};
+
 const creditPackages: CreditPackage[] = [
   {
     id: "basic",
-    name: "Basic",
+    name: "베이직",
     credits: 20,
     price: 0,
     description:
@@ -34,23 +51,54 @@ const creditPackages: CreditPackage[] = [
     ],
   },
   {
-    id: "business",
-    name: "Business",
+    id: "starter",
+    name: "스타터",
     credits: 100,
     price: 10000,
-    description: "모든 필수 기능이 필요한 개인 또는 중소기업에 적합합니다.",
+    description:
+      "모든 필수 기능이 필요한 개인 또는 소규모 비즈니스에 적합합니다.",
     features: [
       "Meta Vision S/W 지원",
       "Meta Vision App 지원(Android, IOS)",
       "자유로운 공유(HTML, GIF, MP4)",
       "Meta Vision Web Viewer 지원",
     ],
+  },
+  {
+    id: "professional",
+    name: "프로페셔널",
+    credits: 350,
+    price: 30000,
+    description: "좀 더 많은 크레딧이 필요한 전문가 및 중소기업에 적합합니다.",
+    features: [
+      "Meta Vision S/W 지원",
+      "Meta Vision App 지원(Android, IOS)",
+      "자유로운 공유(HTML, GIF, MP4)",
+      "Meta Vision Web Viewer 지원",
+      "우선 지원",
+    ],
     isPopular: true,
   },
   {
+    id: "business",
+    name: "비즈니스",
+    credits: 650,
+    price: 50000,
+    description:
+      "대규모 프로젝트와 활발한 비즈니스 활동을 위한 최적의 선택입니다.",
+    features: [
+      "Meta Vision S/W 지원",
+      "Meta Vision App 지원(Android, IOS)",
+      "자유로운 공유(HTML, GIF, MP4)",
+      "Meta Vision Web Viewer 지원",
+      "우선 지원",
+      "맞춤형 통계 리포트",
+    ],
+  },
+  {
     id: "enterprise",
-    name: "Enterprise",
-    credits: 1000,
+    name: "엔터프라이즈",
+    credits: 1500,
     price: 100000,
     description:
       "대용량 데이터, 확장성 및 추가 기능이 필요한 기업에 적합합니다.",
@@ -59,6 +107,9 @@ const creditPackages: CreditPackage[] = [
       "Meta Vision App 지원(Android, IOS)",
       "자유로운 공유(HTML, GIF, MP4)",
       "Meta Vision Web Viewer 지원",
+      "최우선 지원",
+      "맞춤형 통계 리포트",
+      "기업용 API 액세스",
     ],
   },
 ];
@@ -123,7 +174,18 @@ export default function Pricing() {
         <div className="grid grid-cols-1 gap-10 my-10 md:grid-cols-2 xl:grid-cols-3">
           {creditPackages.map((pkg) => (
             <div key={pkg.id} className="px-5">
-              <div className="flex bg-white flex-col items-center w-full border-[1px] border-neutral-100 shadow-lg rounded-3xl">
+              <div
+                className={`flex bg-white flex-col items-center w-full border-[1px] ${
+                  pkg.isPopular
+                    ? "border-blue-400 ring-2 ring-blue-400"
+                    : "border-neutral-100"
+                } shadow-lg rounded-3xl`}
+              >
+                {pkg.isPopular && (
+                  <div className="bg-blue-500 text-white px-4 py-1 rounded-b-lg text-sm font-medium">
+                    인기 선택
+                  </div>
+                )}
                 <div className="py-10 px-8 flex flex-col gap-5 w-full border-b-[1px] border-neutral-300 mb-6">
                   <div className="text-xl flex flex-col">
                     <span className="font-[550]">{pkg.name}</span>
@@ -142,7 +204,10 @@ export default function Pricing() {
                       </>
                     ) : (
                       <>
-                        월간 <br />{" "}
+                        <span className="text-sm font-normal text-gray-600">
+                          한 번만 결제
+                        </span>{" "}
+                        <br />{" "}
                         <span className="text-blue-500">
                           KRW {pkg.price.toLocaleString()}
                         </span>
@@ -162,12 +227,15 @@ export default function Pricing() {
                     ))}
                   </ul>
                   <span className="text-neutral-600 pb-2">
-                    * Meta Vision {pkg.credits}개 데이터를 제공합니다.
+                    * AI 3D 모델링 및 기타 서비스에 사용 가능한 {pkg.credits}개
+                    크레딧을 제공합니다.
                   </span>
                   <button
                     onClick={() => handlePurchase(pkg)}
                     disabled={loading}
-                    className="hover:scale-105 rounded-md text-2xl text-white bg-blue-400 px-7 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={`hover:scale-105 rounded-md text-2xl text-white ${
+                      pkg.isPopular ? "bg-blue-500" : "bg-blue-400"
+                    } px-7 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200`}
                   >
                     {loading
                       ? "처리 중..."

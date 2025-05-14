@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { PaymentResult } from "@/types/payment";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";
-import { confirmPayment } from "@/app/api/payment/api";
+import { useMutation } from "@apollo/client";
+import { MAKE_PAYMENT } from "@/app/api/payment/api";
 
 const creditPackages: Record<string, number> = {
   basic: 20,
@@ -27,9 +28,14 @@ export default function SuccessPage() {
   } | null>(null);
   const isProcessing = useRef(false);
 
-  const paymentKey = searchParams.get("paymentKey");
-  const orderId = searchParams.get("orderId");
-  const amount = searchParams.get("amount");
+  // Apollo Client 뮤테이션 설정
+  const [makePayment] = useMutation(MAKE_PAYMENT);
+
+  const paymentKey = searchParams.get("paymentKey") || "";
+  const orderId = searchParams.get("orderId") || "";
+  const amount = searchParams.get("amount")
+    ? Number(searchParams.get("amount"))
+    : 0;
 
   useEffect(() => {
     const getParams = async () => {
@@ -46,7 +52,7 @@ export default function SuccessPage() {
         const data = {
           paymentKey,
           orderId,
-          amount: Number(amount),
+          amount,
         };
         setRequestData(data);
 
@@ -95,32 +101,42 @@ export default function SuccessPage() {
           setPaymentResult(dataResponse);
         }
 
-        // 추가: confirmPayment API 호출
+        // 추가: Apollo Client의 makePayment 뮤테이션 호출
         try {
-          console.log("confirmPayment API 요청 데이터:", data);
+          console.log("makePayment 뮤테이션 요청 데이터:", data);
 
-          const confirmResponse = await confirmPayment(data, token);
-          console.log("confirmPayment API 응답:", confirmResponse);
+          const result = await makePayment({
+            variables: {
+              paymentKey: data.paymentKey,
+              orderId: data.orderId,
+              amount: data.amount,
+            },
+          });
 
-          if (!confirmResponse.success) {
-            console.error("confirmPayment API 오류:", confirmResponse.message);
+          console.log("makePayment 뮤테이션 응답:", result);
+
+          if (!result.data.makePayment.success) {
+            console.error(
+              "makePayment 뮤테이션 오류:",
+              result.data.makePayment.message
+            );
             // 서버 오류 메시지가 있으면 표시
-            if (confirmResponse.error) {
-              console.error("서버 오류 상세:", confirmResponse.error);
+            if (result.errors) {
+              console.error("서버 오류 상세:", result.errors);
             }
           } else {
             // 성공 시 크레딧 정보 업데이트
-            if (confirmResponse.credits) {
+            if (result.data.makePayment.credit) {
               setPaymentResult((prev) => ({
                 ...prev!,
-                credits: confirmResponse.credits,
+                credits: result.data.makePayment.credit.amount,
                 success: true,
-                message: `${confirmResponse.credits} 크레딧이 추가되었습니다.`,
+                message: `${result.data.makePayment.credit.amount} 크레딧이 추가되었습니다.`,
               }));
             }
           }
         } catch (confirmError) {
-          console.error("confirmPayment API 호출 중 오류:", confirmError);
+          console.error("makePayment 뮤테이션 호출 중 오류:", confirmError);
           // API 호출 실패는 사용자에게 표시하지 않음
         }
       } catch (error) {
@@ -137,7 +153,7 @@ export default function SuccessPage() {
     };
 
     getParams();
-  }, [searchParams]);
+  }, [searchParams, makePayment, paymentKey, orderId, amount]);
 
   const handlePaymentConfirmation = async () => {
     try {
@@ -152,18 +168,20 @@ export default function SuccessPage() {
         return;
       }
 
-      const data = {
-        paymentKey,
-        orderId,
-        amount: Number(amount),
-      };
+      const result = await makePayment({
+        variables: {
+          paymentKey,
+          orderId,
+          amount,
+        },
+      });
 
-      const response = await confirmPayment(data, token);
-
-      if (response.success) {
-        setPaymentResult(response.data);
+      if (result.data.makePayment.success) {
+        setPaymentResult(result.data.makePayment);
       } else {
-        setError(response.message || "결제 확인 중 오류가 발생했습니다.");
+        setError(
+          result.data.makePayment.message || "결제 확인 중 오류가 발생했습니다."
+        );
       }
     } catch (error) {
       console.error("결제 확인 중 오류:", error);

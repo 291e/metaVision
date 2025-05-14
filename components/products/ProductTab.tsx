@@ -23,16 +23,7 @@ const ProductTabs: React.FC = () => {
         >
           전체
         </button>
-        <button
-          className={`px-4 py-2 border-b-2 ${
-            activeTab === "mine"
-              ? "border-blue-500 font-bold"
-              : "border-transparent"
-          }`}
-          onClick={() => setActiveTab("mine")}
-        >
-          나의 자산
-        </button>
+
         <button
           className={`px-4 py-2 border-b-2 ${
             activeTab === "ai3d"
@@ -42,6 +33,16 @@ const ProductTabs: React.FC = () => {
           onClick={() => setActiveTab("ai3d")}
         >
           AI 3D 모델
+        </button>
+        <button
+          className={`px-4 py-2 border-b-2 ${
+            activeTab === "mine"
+              ? "border-blue-500 font-bold"
+              : "border-transparent"
+          }`}
+          onClick={() => setActiveTab("mine")}
+        >
+          Photogrammetry
         </button>
       </div>
       {/* 탭 내용 */}

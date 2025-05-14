@@ -7,15 +7,20 @@ import useUser from "@/app/hooks/useUser";
 import { useQuery } from "@apollo/client";
 import { ALL_PRODUCT_QUERY } from "@/app/api/product/query";
 import { Product } from "@/app/gql/graphql";
-import { FiEye, FiLoader, FiBox } from "react-icons/fi";
+import { FiEye, FiLoader, FiBox, FiRefreshCw } from "react-icons/fi";
 import axios from "axios";
 import ResultModal from "./AiModel/ResultModal";
+import { formatFileSize } from "@/lib/utils";
 
 interface S3Model {
   key: string;
   url: string;
   title: string;
   lastModified: Date | string;
+  fileName?: string;
+  size?: number | string;
+  viewerUrl?: string;
+  modelId?: string;
 }
 
 const AiModelSlide: React.FC = () => {
@@ -92,18 +97,27 @@ const AiModelSlide: React.FC = () => {
     try {
       console.log("S3 모델 가져오기 요청:", `/api/ai-models?userId=${userId}`);
 
-      // S3 경로를 직접 확인하여 사용자의 모델 목록 가져오기
+      // AI 모델 API를 사용하여 모델 목록 가져오기
       const response = await axios.get(`/api/ai-models?userId=${userId}`);
 
       console.log("API 응답:", response.data);
 
       if (response.data && Array.isArray(response.data.models)) {
-        setS3Models(response.data.models);
-        console.log(
-          "S3 모델 로드 성공:",
-          response.data.models.length,
-          "개 모델"
-        );
+        // 응답 구조에 맞게 데이터 포맷 처리
+        const formattedModels = response.data.models.map((model: any) => ({
+          key: model.key || model.fileName || `model-${Date.now()}`,
+          url: model.url,
+          title: model.title || "AI 3D 모델",
+          lastModified: model.lastModified || new Date().toISOString(),
+          fileName: model.fileName || model.key,
+          size: model.size || "알 수 없음",
+          viewerUrl:
+            model.viewerUrl || `/viewer?model=${encodeURIComponent(model.url)}`,
+          modelId: model.modelId || model.key,
+        }));
+
+        setS3Models(formattedModels);
+        console.log("S3 모델 로드 성공:", formattedModels.length, "개 모델");
       } else {
         console.warn("유효한 모델 데이터가 없습니다:", response.data);
         setS3Models([]);
@@ -151,6 +165,11 @@ const AiModelSlide: React.FC = () => {
   // 모델 클릭 핸들러
   const handleModelClick = async (model: S3Model) => {
     console.log("모델 열기:", model);
+
+    // 사용자에게 확인 메시지 표시
+    if (!window.confirm("3D 모델을 보시겠습니까?")) {
+      return;
+    }
 
     // 로딩 상태 설정
     setLoading(true);
@@ -278,8 +297,20 @@ const AiModelSlide: React.FC = () => {
         </div>
       )}
 
+      {/* 섹션 제목과 새로고침 버튼 */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">내 AI 3D 모델</h2>
+        <button
+          onClick={fetchAllModels}
+          className="flex items-center px-4 py-2 text-blue-500 hover:text-blue-700 transition"
+        >
+          <FiRefreshCw className="mr-2" />
+          새로고침
+        </button>
+      </div>
+
+      {/* S3 모델 섹션 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {/* S3에서 직접 가져온 모델 */}
         {s3Models.map((model, index) => (
           <div
             key={`s3-${model.key}`}
@@ -298,21 +329,46 @@ const AiModelSlide: React.FC = () => {
                   <FiEye size={20} />
                 </button>
               </div>
+              <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-md text-xs">
+                AI 3D
+              </div>
             </div>
             <div className="p-4 flex-1 flex flex-col justify-between">
-              <h3 className="font-medium text-gray-900 truncate">
-                {model.title || "AI 3D 모델"}
-              </h3>
-              <p className="text-xs text-gray-500 mt-1">
-                {typeof model.lastModified === "string"
-                  ? new Date(model.lastModified).toLocaleDateString()
-                  : model.lastModified?.toLocaleDateString?.() || "최근 생성됨"}
-              </p>
+              <div>
+                <h3 className="font-medium text-gray-900 truncate">
+                  {model.title || "AI 3D 모델"}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  {typeof model.lastModified === "string"
+                    ? new Date(model.lastModified).toLocaleDateString()
+                    : model.lastModified instanceof Date
+                    ? model.lastModified.toLocaleDateString()
+                    : "최근 생성됨"}
+                </p>
+                {model.size && (
+                  <p className="text-xs text-gray-500">
+                    크기:{" "}
+                    {typeof model.size === "number"
+                      ? formatFileSize(model.size)
+                      : model.size}
+                  </p>
+                )}
+              </div>
+              <Link
+                href={
+                  model.viewerUrl ||
+                  `/viewer?model=${encodeURIComponent(model.url)}`
+                }
+                className="mt-2 w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                <FiEye className="mr-2" />
+                모델 보기
+              </Link>
             </div>
           </div>
         ))}
 
-        {/* GraphQL에서 가져온 기존 모델 */}
+        {/* GraphQL에서 가져온 AI 3D 모델 */}
         {aiModels.map((model) => (
           <div
             key={`gql-${model.id}`}
@@ -335,9 +391,13 @@ const AiModelSlide: React.FC = () => {
                 <Link
                   href={`/meta360/${model.id}`}
                   className="p-2 bg-blue-500 text-white rounded-full"
+                  title="3D 모델 보기"
                 >
                   <FiEye size={20} />
                 </Link>
+              </div>
+              <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-md text-xs">
+                AI 3D
               </div>
             </div>
             <div className="p-4 flex-1 flex flex-col justify-between">
@@ -347,6 +407,13 @@ const AiModelSlide: React.FC = () => {
               <p className="text-xs text-gray-500 mt-1">
                 {new Date(model.createdAt).toLocaleDateString()}
               </p>
+              <Link
+                href={`/meta360/${model.id}`}
+                className="mt-2 w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                <FiEye className="mr-2" />
+                모델 보기
+              </Link>
             </div>
           </div>
         ))}
@@ -359,15 +426,6 @@ const AiModelSlide: React.FC = () => {
           <span className="ml-2">더 불러오는 중...</span>
         </div>
       )}
-
-      <div className="mt-4 text-right">
-        <button
-          onClick={fetchAllModels}
-          className="px-4 py-2 text-blue-500 hover:text-blue-700 transition"
-        >
-          새로고침
-        </button>
-      </div>
 
       {/* 선택된 모델에 대한 모달 */}
       {showModal && selectedModel && (

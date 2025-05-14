@@ -3,8 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader, OrbitControls, DRACOLoader } from "three-stdlib";
-import { FiX, FiRefreshCw, FiShare2, FiRotateCw, FiSave } from "react-icons/fi";
-import { MdError } from "react-icons/md";
+import {
+  FiX,
+  FiRefreshCw,
+  FiShare2,
+  FiRotateCw,
+  FiSave,
+  FiPlay,
+  FiPause,
+} from "react-icons/fi";
+import { MdError, MdRestartAlt, Md3dRotation } from "react-icons/md";
 
 interface ResultModalProps {
   blobUrl: string;
@@ -45,12 +53,66 @@ export default function ResultModal({
 
   // 회전 속도 설정 (토글)
   const toggleRotation = () => {
+    if (
+      !window.confirm(
+        rotationSpeed > 0
+          ? "모델 회전을 중지하시겠습니까?"
+          : "모델 회전을 시작하시겠습니까?"
+      )
+    ) {
+      return;
+    }
     setRotationSpeed((prev) => (prev > 0 ? 0 : 0.01));
+  };
+
+  // 새 모델 만들기 핸들러
+  const handleNewModel = () => {
+    if (
+      !window.confirm(
+        "새 모델 생성 페이지로 이동하시겠습니까? 현재 모델은 사라집니다."
+      )
+    ) {
+      return;
+    }
+    onReset();
+  };
+
+  // 모델 저장 핸들러
+  const handleSaveModel = async () => {
+    if (!onSave) return;
+
+    if (!window.confirm("모델을 내 계정에 저장하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      await onSave();
+    } catch (err) {
+      console.error("모델 저장 오류:", err);
+    }
+  };
+
+  // 공유 핸들러
+  const handleShare = () => {
+    if (!window.confirm("이 모델을 공유하시겠습니까?")) {
+      return;
+    }
+    // 공유 기능 구현
+    alert("공유 기능은 준비 중입니다.");
   };
 
   // 배경 클릭 시 모달 닫기 (모달 내부 클릭은 이벤트 전파 중지)
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
+      if (window.confirm("모델 보기를 종료하시겠습니까?")) {
+        onClose();
+      }
+    }
+  };
+
+  // 모달 닫기 핸들러
+  const handleClose = () => {
+    if (window.confirm("모델 보기를 종료하시겠습니까?")) {
       onClose();
     }
   };
@@ -153,25 +215,53 @@ export default function ResultModal({
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setClearColor(0xf0f0f0, 1);
       renderer.shadowMap.enabled = true;
+
+      // 웹 브라우저는 이미 sRGB 색상 공간을 사용하므로, 별도 변환 불필요
+      // 기본값(THREE.SRGBColorSpace) 대신 선형 색상 공간 사용하지 않음
       renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+      // 톤 매핑 설정 - 더 밝게 표현
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2; // 노출값 증가로 밝기 강화
 
       // DOM에 추가
       container.innerHTML = "";
       container.appendChild(renderer.domElement);
 
       // 조명 설정
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+      const ambientLight = new THREE.AmbientLight(0xfffaf0, 2.0); // 강도 증가 (1.5 → 2.0)
       scene.add(ambientLight);
 
-      const directionalLight1 = new THREE.DirectionalLight(0xffffff, 1.5);
+      const directionalLight1 = new THREE.DirectionalLight(0xfff5e6, 3.0); // 강도 증가 (2.0 → 3.0)
       directionalLight1.position.set(5, 5, 5);
       directionalLight1.castShadow = true;
       scene.add(directionalLight1);
 
-      const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1.0);
+      const directionalLight2 = new THREE.DirectionalLight(0xfff5e6, 2.0); // 강도 증가 (1.5 → 2.0)
       directionalLight2.position.set(-5, 5, -5);
       directionalLight2.castShadow = true;
       scene.add(directionalLight2);
+
+      // 추가 조명 - 아래에서 위로 비추는 조명 추가
+      const directionalLight3 = new THREE.DirectionalLight(0xffffff, 1.5); // 강도 증가 (1.0 → 1.5)
+      directionalLight3.position.set(0, -5, 0);
+      directionalLight3.castShadow = false; // 그림자는 필요 없음
+      scene.add(directionalLight3);
+
+      // 뒤쪽에서 비추는 조명 추가
+      const directionalLight4 = new THREE.DirectionalLight(0xffffff, 1.5); // 강도 증가 (1.0 → 1.5)
+      directionalLight4.position.set(0, 0, -5);
+      directionalLight4.castShadow = false;
+      scene.add(directionalLight4);
+
+      // 포인트 라이트 추가 (S3 모델과 유사한 환경 구현)
+      const pointLight1 = new THREE.PointLight(0xffffff, 50, 100); // 고강도 포인트 라이트
+      pointLight1.position.set(0, 5, 0); // 모델 상단
+      scene.add(pointLight1);
+
+      const pointLight2 = new THREE.PointLight(0xffffff, 30, 100); // 추가 포인트 라이트
+      pointLight2.position.set(5, 0, 5); // 모델 옆면
+      scene.add(pointLight2);
 
       // 바닥면 그리드
       const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0xcccccc);
@@ -308,11 +398,28 @@ export default function ResultModal({
           console.log("✅ 원본 모델 로드 성공");
           const model = gltf.scene;
 
-          // 메시에 그림자 설정
+          // 메시에 그림자 설정 및 재질 색상 조정
           model.traverse((child) => {
             if ((child as THREE.Mesh).isMesh) {
-              (child as THREE.Mesh).castShadow = true;
-              (child as THREE.Mesh).receiveShadow = true;
+              const mesh = child as THREE.Mesh;
+              mesh.castShadow = true;
+              mesh.receiveShadow = true;
+
+              // 재질이 있는 경우 조정
+              if (mesh.material) {
+                // 단일 재질인 경우
+                if (!Array.isArray(mesh.material)) {
+                  const material = mesh.material as THREE.Material;
+                  ensureMaterialIsBright(material);
+                }
+                // 여러 재질인 경우
+                else {
+                  const materials = mesh.material as THREE.Material[];
+                  materials.forEach((material) => {
+                    ensureMaterialIsBright(material);
+                  });
+                }
+              }
             }
           });
 
@@ -351,6 +458,49 @@ export default function ResultModal({
         }
       );
 
+      // 재질 밝기 조정 헬퍼 함수
+      const ensureMaterialIsBright = (material: THREE.Material) => {
+        // Standard 재질인 경우 밝기 조정
+        if (material instanceof THREE.MeshStandardMaterial) {
+          // 반사율 증가 (기본값은 0.5)
+          if (material.metalness < 0.6) {
+            material.metalness = Math.min(material.metalness * 1.2, 0.8);
+          }
+
+          // 거칠기 감소 (더 매끈하게)
+          if (material.roughness > 0.3) {
+            material.roughness = Math.max(material.roughness * 0.8, 0.2);
+          }
+
+          // 전반적인 밝기 증가
+          material.emissive = new THREE.Color(0x555555); // 더 강한 발광 효과 (0x333333 → 0x555555)
+          material.emissiveIntensity = 0.3; // 발광 강도 증가 (0.1 → 0.3)
+
+          // 색상 조정
+          if (material.color) {
+            // 기존 색상 유지하면서 밝기 증가
+            const hsl = { h: 0, s: 0, l: 0 };
+            material.color.getHSL(hsl);
+            hsl.l = Math.min(hsl.l * 1.3, 1.0); // 밝기 증가 (최대 1.0)
+            material.color.setHSL(hsl.h, hsl.s, hsl.l);
+          }
+        }
+        // Basic, Lambert, Phong 등 다른 재질에 대한 특정 조정도 추가 가능
+        else if (
+          material instanceof THREE.MeshBasicMaterial ||
+          material instanceof THREE.MeshLambertMaterial ||
+          material instanceof THREE.MeshPhongMaterial
+        ) {
+          // 다른 재질 유형에 대한 처리
+          if (material.color) {
+            const hsl = { h: 0, s: 0, l: 0 };
+            material.color.getHSL(hsl);
+            hsl.l = Math.min(hsl.l * 1.3, 1.0); // 밝기 증가
+            material.color.setHSL(hsl.h, hsl.s, hsl.l);
+          }
+        }
+      };
+
       // 화면 크기 변경 대응 함수
       const handleResize = () => {
         if (!viewerRef.current || !cameraRef.current || !rendererRef.current)
@@ -374,7 +524,7 @@ export default function ResultModal({
       const animate = () => {
         animationFrameIdRef.current = requestAnimationFrame(animate);
 
-        // 자동 회전
+        // 자동 회전 - 모델 존재 체크 추가
         if (modelRef.current && rotationSpeed > 0) {
           modelRef.current.rotation.y += rotationSpeed;
         }
@@ -384,7 +534,7 @@ export default function ResultModal({
           controlsRef.current.update();
         }
 
-        // 렌더링
+        // 렌더링 - 모든 참조 확인 후 렌더링
         if (rendererRef.current && sceneRef.current && cameraRef.current) {
           rendererRef.current.render(sceneRef.current, cameraRef.current);
         }
@@ -412,7 +562,9 @@ export default function ResultModal({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        if (window.confirm("모델 보기를 종료하시겠습니까?")) {
+          onClose();
+        }
       }
     };
 
@@ -463,7 +615,7 @@ export default function ResultModal({
             )}
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 rounded-full hover:bg-gray-100 transition"
           >
             <FiX size={24} />
@@ -495,29 +647,39 @@ export default function ResultModal({
         <div className="p-4 border-t bg-gray-50 flex justify-between">
           <div className="flex gap-2">
             <button
-              onClick={onReset}
+              onClick={handleNewModel}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg flex items-center gap-2 transition"
+              title="새 모델 만들기"
             >
-              <FiRefreshCw size={18} />
+              <MdRestartAlt size={20} className="text-blue-600" />
               <span className="hidden md:block">새 모델 만들기</span>
             </button>
             <button
               onClick={toggleRotation}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg flex items-center gap-2 transition"
+              title={rotationSpeed > 0 ? "회전 중지" : "회전 시작"}
             >
-              <FiRotateCw size={18} />
-              <span className="hidden md:block">
-                {rotationSpeed > 0 ? "회전 중지" : "회전"}
-              </span>
+              {rotationSpeed > 0 ? (
+                <>
+                  <FiPause size={20} className="text-orange-500" />
+                  <span className="hidden md:block">회전 중지</span>
+                </>
+              ) : (
+                <>
+                  <Md3dRotation size={20} className="text-green-500" />
+                  <span className="hidden md:block">회전 시작</span>
+                </>
+              )}
             </button>
           </div>
 
           <div className="flex gap-2">
             {onSave && (
               <button
-                onClick={onSave}
+                onClick={handleSaveModel}
                 disabled={s3Uploading}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                title="내 계정에 저장"
               >
                 <FiSave size={18} />
                 <span className="hidden md:block">
@@ -525,7 +687,11 @@ export default function ResultModal({
                 </span>
               </button>
             )}
-            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition">
+            <button
+              onClick={handleShare}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition"
+              title="공유하기"
+            >
               <FiShare2 size={18} />
               <span className="hidden md:block">공유하기</span>
             </button>

@@ -14,63 +14,23 @@ import {
 } from "react-icons/fi";
 import { MdError } from "react-icons/md";
 import ResultModal from "./AiModel/ResultModal"; // 올바른 경로로 수정
-import { S3Client } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
 import useUser from "@/app/hooks/useUser";
-import { ObjectCannedACL } from "@aws-sdk/client-s3";
 import { useQuery, useMutation } from "@apollo/client";
-import { getCreditBalance, useCredits } from "@/app/api/payment/api";
+import { USE_CREDIT, GET_CREDIT } from "@/app/api/payment/api";
+import { toast } from "react-hot-toast";
 
 const SERVER_URL = "realserver.metabank360.com:5100";
 const CREDIT_COST = 10; // 모델 생성당 필요한 크레딧
-
-// S3 클라이언트 생성
-const s3Client = new S3Client({
-  region: process.env.NEXT_PUBLIC_AWS_S3_REGION,
-  credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_LOCAL_KEY!,
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_LOCAL_SECRET_KEY!,
-  },
-});
-
-// S3 업로드 함수
-const uploadFileToS3 = async (
-  file: Blob,
-  fileName: string,
-  contentType: string,
-  onProgress: (progress: number) => void,
-  acl?: ObjectCannedACL
-): Promise<string> => {
-  const upload = new Upload({
-    client: s3Client,
-    params: {
-      Bucket: process.env.NEXT_PUBLIC_AWS_S3_BUCKET!,
-      Key: fileName,
-      Body: file,
-      ContentType: contentType,
-      ACL: acl,
-    },
-    queueSize: 4,
-    partSize: 5 * 1024 * 1024, // 5MB
-    leavePartsOnError: false,
-  });
-
-  upload.on("httpUploadProgress", (progress) => {
-    if (progress.total) {
-      const percentage = (progress.loaded! / progress.total) * 100;
-      onProgress(percentage);
-    }
-  });
-
-  await upload.done();
-  return `https://${process.env.NEXT_PUBLIC_AWS_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_S3_REGION}.amazonaws.com/${fileName}`;
-};
 
 export default function PhotogrammetryViewer() {
   const { data: userData } = useUser();
   const [creditBalance, setCreditBalance] = useState<number>(0);
   const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [clientId] = useState(`user_${Date.now()}`);
+  const [clientId] = useState(() => {
+    // 기존 clientId가 있는지 확인하고 없으면 새로 생성
+    const savedClientId = localStorage.getItem("modelGenerationClientId");
+    return savedClientId || `user_${Date.now()}`;
+  });
   const [connectionInfo, setConnectionInfo] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -83,7 +43,7 @@ export default function PhotogrammetryViewer() {
   const [wsConnected, setWsConnected] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modelGenerated, setModelGenerated] = useState(false);
-  const [s3ModelUrl, setS3ModelUrl] = useState<string | null>(null); // S3에 저장된 모델 URL
+  const [s3ModelUrl, setS3ModelUrl] = useState<string | null>(null); // 저장된 모델 URL
   const [s3UploadProgress, setS3UploadProgress] = useState<number>(0);
   const [s3Uploading, setS3Uploading] = useState<boolean>(false);
   const [modelTitle, setModelTitle] = useState<string>("");
@@ -92,40 +52,29 @@ export default function PhotogrammetryViewer() {
   const modelRef = useRef<THREE.Group | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const modelBlobRef = useRef<Blob | null>(null); // 모델 블롭 참조 저장
+  const [isDragging, setIsDragging] = useState<boolean>(false); // 드래그 상태 관리
+  const dropRef = useRef<HTMLLabelElement>(null); // 드롭 영역 참조
+
+  // 페이지를 벗어날 때 확인 메시지 표시 기능
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // 크레딧 쿼리 및 뮤테이션 설정
+  const { data: getCredit, refetch: refetchCredit } = useQuery(GET_CREDIT, {
+    variables: { offset: 0 },
+    fetchPolicy: "network-only",
+  });
+
+  const [useCredit, { loading: creditLoading }] = useMutation(USE_CREDIT);
 
   // 크레딧 잔액 조회
   useEffect(() => {
-    const fetchCreditBalance = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        console.log(
-          "토큰 형식:",
-          token?.split(".").length === 3 ? "JWT" : "일반 문자열"
-        );
-
-        if (!token) {
-          console.error("토큰이 없습니다.");
-          return;
-        }
-
-        const response = await getCreditBalance(token);
-        console.log("크레딧 조회 응답:", response);
-
-        if (!response.success) {
-          throw new Error(
-            response.message || "크레딧 잔액 조회에 실패했습니다."
-          );
-        }
-        setCreditBalance(response.balance);
-      } catch (error) {
-        console.error("크레딧 잔액 조회 실패:", error);
+    if (getCredit?.getCredit) {
+      const { success, balance } = getCredit.getCredit;
+      if (success) {
+        setCreditBalance(balance);
       }
-    };
-
-    if (userData?.getMyInfo) {
-      fetchCreditBalance();
     }
-  }, [userData]);
+  }, [getCredit]);
 
   // WebSocket 연결 설정
   useEffect(() => {
@@ -284,69 +233,179 @@ export default function PhotogrammetryViewer() {
   const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) {
       const file = event.target.files[0];
-
-      // 파일 확장자 검사
-      const fileType = file.type.toLowerCase();
-      if (!fileType.includes("image/")) {
-        setError("이미지 파일만 업로드 가능합니다");
-        return;
-      }
-
-      // 파일 크기 제한 (10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setError("파일 크기는 10MB 이하여야 합니다");
-        return;
-      }
-
-      setError(null);
-      // 불필요한 sRGB 변환 제거, 이미지 파일 직접 설정
-      setImageFile(file);
-      setLoading(false); // UI 튐 방지
+      handleFile(file);
     }
   };
 
-  // 버튼 클릭 시 프로세스 시작
+  // 파일 처리 함수 - 공통 로직 분리
+  const handleFile = (file: File) => {
+    // 파일 확장자 검사
+    const fileType = file.type.toLowerCase();
+    if (!fileType.includes("image/")) {
+      setError("이미지 파일만 업로드 가능합니다");
+      return;
+    }
+
+    // 파일 크기 제한 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError("파일 크기는 10MB 이하여야 합니다");
+      return;
+    }
+
+    setError(null);
+    // 불필요한 sRGB 변환 제거, 이미지 파일 직접 설정
+    setImageFile(file);
+    setLoading(false); // UI 튐 방지
+  };
+
+  // 드래그 앤 드롭 핸들러들
+  const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
+    setIsDragging(true);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      handleFile(file);
+    }
+  };
+
+  // 로컬 스토리지에서 생성 상태 복원
+  useEffect(() => {
+    // 로컬 스토리지에서 생성 상태 불러오기
+    const savedGenerationState = localStorage.getItem("modelGenerationState");
+    if (savedGenerationState) {
+      try {
+        const state = JSON.parse(savedGenerationState);
+        // 생성 중인 상태였다면 복원
+        if (state.loading) {
+          setLoading(true);
+          setProgress(state.progress || 0);
+          setIsGenerating(true);
+
+          // 모델 URL이 있는 경우 복원 (생성이 완료되었던 경우)
+          if (state.modelUrl) {
+            setModelUrl(state.modelUrl);
+          }
+
+          // 이미지 파일은 브라우저 제한으로 저장할 수 없으므로 다시 선택하라는 메시지 표시
+          if (!state.modelUrl) {
+            setError(
+              "생성 중이던 모델이 있습니다. 동일한 이미지를 다시 선택해주세요."
+            );
+          }
+        }
+
+        // 모델 제목 복원
+        if (state.modelTitle) {
+          setModelTitle(state.modelTitle);
+        }
+
+        // 클라이언트 ID 저장
+        localStorage.setItem("modelGenerationClientId", clientId);
+      } catch (e) {
+        console.error("생성 상태 복원 오류:", e);
+        localStorage.removeItem("modelGenerationState");
+      }
+    }
+  }, []);
+
+  // 생성 상태 저장
+  useEffect(() => {
+    // 생성 중인 상태나 결과가 있을 때만 저장
+    if (loading || modelUrl) {
+      const generationState = {
+        loading,
+        progress,
+        modelUrl,
+        modelTitle,
+        clientId,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(
+        "modelGenerationState",
+        JSON.stringify(generationState)
+      );
+
+      // 생성 중 상태 설정
+      setIsGenerating(loading);
+    } else if (!loading && !modelUrl) {
+      // 생성이 완전히 취소된 경우 저장된 상태 제거
+      localStorage.removeItem("modelGenerationState");
+      setIsGenerating(false);
+    }
+  }, [loading, progress, modelUrl, modelTitle, clientId]);
+
+  // 페이지를 떠날 때 경고 메시지 표시
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isGenerating) {
+        const message =
+          "모델 생성이 진행 중입니다. 페이지를 떠나면 생성 상태가 초기화될 수 있습니다. 계속하시겠습니까?";
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isGenerating]);
+
+  // 모델 생성 요청
   const handleGenerateClick = async () => {
     if (!userData?.getMyInfo) {
       alert("로그인이 필요합니다.");
       return;
     }
 
-    const token = localStorage.getItem("token");
-    console.log("현재 토큰:", token); // 토큰 확인용 로그
-
-    if (!token) {
-      alert("로그인이 필요합니다.");
+    if (creditBalance < CREDIT_COST) {
+      toast.error(
+        `크레딧이 부족합니다. 현재 ${creditBalance} 크레딧, 필요 ${CREDIT_COST} 크레딧. 크레딧을 충전해주세요.`
+      );
       return;
     }
 
-    if (creditBalance < CREDIT_COST) {
-      alert(
-        `크레딧이 부족합니다. 현재 ${creditBalance} 크레딧, 필요 ${CREDIT_COST} 크레딧`
-      );
-      return;
+    // 이미 생성 중인 경우, 확인 메시지 표시
+    if (loading) {
+      if (
+        !window.confirm(
+          "모델 생성이 이미 진행 중입니다. 새로 시작하시겠습니까?"
+        )
+      ) {
+        return;
+      }
     }
 
     try {
-      // 크레딧 차감
-      const creditResponse = await useCredits(
-        CREDIT_COST,
-        "AI 3D 모델 생성",
-        token
-      );
-      console.log("크레딧 차감 응답:", creditResponse); // 응답 확인용 로그
-
-      if (!creditResponse.success) {
-        throw new Error(
-          creditResponse.message || "크레딧 차감에 실패했습니다."
-        );
-      }
-      setCreditBalance(creditResponse.credits);
-
-      // 모델 생성 로직
-      if (loading) return;
-
+      // 모델이 이미 생성된 경우, 확인 메시지
       if (modelGenerated) {
+        if (
+          !window.confirm("새 모델을 생성하시겠습니까? 현재 모델은 사라집니다.")
+        ) {
+          return;
+        }
         resetProcess();
         if (!imageFile) return;
       }
@@ -356,20 +415,42 @@ export default function PhotogrammetryViewer() {
         return;
       }
 
+      // 크레딧 차감
+      const creditResult = await useCredit({
+        variables: {
+          amount: CREDIT_COST,
+          description: "AI 3D 모델 생성",
+        },
+      });
+
+      if (!creditResult?.data?.useCredit?.success) {
+        throw new Error(
+          creditResult?.data?.useCredit?.message ||
+            "크레딧 사용 중 오류가 발생했습니다."
+        );
+      }
+
+      // 크레딧 잔액 업데이트
+      setCreditBalance(creditResult.data.useCredit.remainingBalance);
+
+      // 모델 생성 상태 설정
       setError(null);
       setLoading(true);
       setProgress(0);
+      setIsGenerating(true);
 
       const result = await initWebSocket();
 
       if (!result.connected) {
         setLoading(false);
+        setIsGenerating(false);
         setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.");
         return;
       }
 
       if (!result.connectionInfo) {
         setLoading(false);
+        setIsGenerating(false);
         setError("서버 연결 정보를 가져오지 못했습니다. 다시 시도해주세요.");
         closeWebSocket();
         return;
@@ -377,13 +458,14 @@ export default function PhotogrammetryViewer() {
 
       const formData = new FormData();
       formData.append("client_id", clientId);
-      formData.append("image_file", imageFile!);
+      formData.append("image_file", imageFile);
       formData.append("connection_info", result.connectionInfo);
 
       await checkQueueStatus(formData);
     } catch (error) {
       console.error("Error:", error);
-      alert(
+      setIsGenerating(false);
+      toast.error(
         error instanceof Error
           ? error.message
           : "모델 생성 중 오류가 발생했습니다."
@@ -569,6 +651,9 @@ export default function PhotogrammetryViewer() {
       // 소켓 연결 종료
       closeWebSocket();
 
+      // 생성 중 상태 해제
+      setIsGenerating(false);
+
       fetch(modelUrl)
         .then((res) => {
           if (!res.ok) {
@@ -619,11 +704,12 @@ export default function PhotogrammetryViewer() {
           console.error("❌ Blob 변환 오류:", err);
           setError("3D 모델을 불러오는데 실패했습니다.");
           setLoading(false);
+          setIsGenerating(false);
         });
     }
   }, [modelUrl, imageFile]);
 
-  // S3에 모델 저장 함수
+  // 모델 저장 함수
   const saveModelToS3 = async () => {
     // 사용자 인증 확인
     if (!userData?.getMyInfo?.id) {
@@ -641,28 +727,119 @@ export default function PhotogrammetryViewer() {
       setS3UploadProgress(0);
 
       const userId = userData.getMyInfo.id;
-      const fileName = `AI_3D_Models/${userId}/${modelTitle}.glb`;
 
-      // S3에 모델 업로드 (public-read 권한으로 저장)
-      const url = await uploadFileToS3(
-        modelBlobRef.current,
-        fileName,
-        "model/gltf-binary",
-        (progress) => setS3UploadProgress(progress),
-        "public-read" as ObjectCannedACL
-      );
+      // 디버깅 정보 출력
+      console.log("모델 파일 정보:", {
+        type: modelBlobRef.current.type,
+        size: modelBlobRef.current.size,
+      });
 
-      setS3ModelUrl(url);
-      setS3UploadProgress(100);
-      console.log("✅ 모델이 S3에 저장됨:", url);
+      // 파일명 확장자를 명시적으로 .glb로 지정
+      const fileName = `${modelTitle || "model"}.glb`;
 
-      // 저장 성공 메시지 표시
-      alert(
-        "3D 모델이 내 계정에 저장되었습니다. '나의 자산' 탭에서 확인할 수 있습니다."
-      );
+      // FormData 객체 생성
+      const formData = new FormData();
+      formData.append("userId", userId);
+      formData.append("modelTitle", modelTitle || `3D_Model_${Date.now()}`);
+
+      // 필요한 경우 새 Blob 객체를 생성하여 content type 지정
+      let fileToUpload = modelBlobRef.current;
+      if (!fileToUpload.type || !fileToUpload.type.includes("gltf-binary")) {
+        // contentType을 명시적으로 지정하여 새 Blob 생성
+        fileToUpload = new Blob([modelBlobRef.current], {
+          type: "model/gltf-binary",
+        });
+        console.log("모델 파일 타입 변환 적용됨:", fileToUpload.type);
+      }
+
+      formData.append("modelFile", fileToUpload, fileName);
+
+      // API 엔드포인트를 통해 업로드
+      console.log("업로드 시작:", fileName);
+
+      // 진행률 표시를 위한 가상 진행 시뮬레이션
+      const progressInterval = setInterval(() => {
+        setS3UploadProgress((prev) => {
+          if (prev >= 95) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 5;
+        });
+      }, 300);
+
+      try {
+        const response = await fetch("/api/ai-models", {
+          method: "POST",
+          body: formData,
+          // 타임아웃 설정을 위한 시그널 추가
+          signal: AbortSignal.timeout(60000), // 60초 타임아웃 (큰 파일 처리를 위해 연장)
+        });
+
+        console.log("응답 상태:", response.status, response.statusText);
+
+        // 응답 본문 텍스트 로깅 시도
+        let responseText = "";
+        try {
+          responseText = await response.text();
+          console.log("응답 원본 텍스트:", responseText);
+        } catch (textError) {
+          console.error("응답 텍스트 추출 오류:", textError);
+        }
+
+        // 텍스트를 JSON으로 파싱 시도
+        let result;
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+          console.log("업로드 응답 JSON:", result);
+        } catch (jsonError) {
+          console.error("JSON 파싱 오류:", jsonError);
+          throw new Error(`응답 파싱 오류: ${responseText || "응답 없음"}`);
+        }
+
+        // 진행 인터벌 정리
+        clearInterval(progressInterval);
+
+        if (!result.success) {
+          throw new Error(result.error || result.details || "업로드 실패");
+        }
+
+        setS3ModelUrl(result.url);
+        setS3UploadProgress(100);
+        console.log("✅ 모델이 저장됨:", result.url);
+
+        // 저장 성공 메시지 표시
+        toast.success(
+          "3D 모델이 내 계정에 저장되었습니다. '나의 자산' 탭에서 확인할 수 있습니다."
+        );
+      } catch (requestError) {
+        clearInterval(progressInterval);
+        console.error("요청 오류:", requestError);
+
+        // 타임아웃 오류 여부 확인
+        let errorMessage = "모델 저장 중 오류가 발생했습니다.";
+        if (
+          requestError instanceof DOMException &&
+          requestError.name === "AbortError"
+        ) {
+          errorMessage =
+            "요청 시간이 초과되었습니다. 네트워크 상태를 확인하고 다시 시도해주세요.";
+        } else if (requestError instanceof Error) {
+          errorMessage += " 세부 정보: " + requestError.message;
+        }
+
+        setError(errorMessage);
+        toast.error(errorMessage);
+      }
     } catch (error) {
-      console.error("❌ S3 업로드 오류:", error);
-      setError("모델 저장 중 오류가 발생했습니다.");
+      console.error("❌ 업로드 오류:", error);
+      // 메시지에 더 많은 정보 제공
+      let errorMessage = "모델 저장 중 오류가 발생했습니다.";
+      if (error instanceof Error) {
+        errorMessage += " 세부 정보: " + error.message;
+      }
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setS3Uploading(false);
     }
@@ -676,6 +853,13 @@ export default function PhotogrammetryViewer() {
 
   // 프로세스 리셋
   const resetProcess = () => {
+    // 사용자에게 확인 메시지 표시
+    if (
+      !window.confirm("모델 생성을 초기화하고 새로운 모델을 만드시겠습니까?")
+    ) {
+      return; // 사용자가 취소하면 함수 종료
+    }
+
     console.log("🔄 프로세스 초기화");
 
     // 진행 중인 인터벌 및 타임아웃 정리
@@ -710,6 +894,10 @@ export default function PhotogrammetryViewer() {
     setQueuePosition(null);
     setShowModal(false);
     setModelGenerated(false);
+    setIsGenerating(false);
+
+    // 로컬 스토리지에서 생성 정보 제거
+    localStorage.removeItem("modelGenerationState");
 
     // 페이지 스크롤 맨 위로 이동 (선택 사항)
     window.scrollTo(0, 0);
@@ -733,32 +921,12 @@ export default function PhotogrammetryViewer() {
     setShowModal(true);
   };
 
-  // 모델 생성 완료 후 크레딧 차감
+  // 모델 생성 완료 후 크레딧 잔액 새로고침
   useEffect(() => {
     if (modelGenerated) {
-      // 크레딧 잔액 새로고침
-      const fetchCreditBalance = async () => {
-        try {
-          const token = localStorage.getItem("token");
-          if (!token) {
-            console.error("토큰이 없습니다.");
-            return;
-          }
-
-          const response = await getCreditBalance(token);
-          if (!response.success) {
-            throw new Error(
-              response.message || "크레딧 잔액 조회에 실패했습니다."
-            );
-          }
-          setCreditBalance(response.credits);
-        } catch (error) {
-          console.error("크레딧 잔액 조회 실패:", error);
-        }
-      };
-      fetchCreditBalance();
+      refetchCredit();
     }
-  }, [modelGenerated]);
+  }, [modelGenerated, refetchCredit]);
 
   // 디버깅용 - 모든 상태 로그 (제거)
   useEffect(() => {
@@ -827,7 +995,7 @@ export default function PhotogrammetryViewer() {
   }, [loading, wsConnected]);
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-md">
+    <div className="flex flex-col items-center w-full max-w-md">
       {/* 크레딧 정보 표시 */}
       {userData?.getMyInfo && (
         <div className="w-full bg-blue-50 p-4 rounded-lg">
@@ -874,7 +1042,7 @@ export default function PhotogrammetryViewer() {
       )}
 
       {!imageFile ? (
-        <div className="p-6 rounded-xl bg-[rgba(0,0,0,0.3)] shadow-lg flex flex-col gap-4 w-full max-w-md border border-gray-700 h-full max-h-[300px]">
+        <div className="px-6 py-4 rounded-xl bg-[rgba(0,0,0,0.3)] shadow-lg flex flex-col gap-4 w-full max-w-md border border-gray-700 h-full max-h-[300px]">
           <div className="text-center">
             <h3 className="text-lg font-semibold text-white">
               AI 3D 모델 생성
@@ -884,11 +1052,25 @@ export default function PhotogrammetryViewer() {
             </p>
           </div>
 
-          <label className="border-2 border-dashed border-blue-300 rounded-lg text-gray-300 cursor-pointer hover:text-blue-300 hover:border-blue-500 bg-[rgba(0,0,0,0.2)] flex flex-col items-center justify-center p-8 transition-all duration-200 ">
+          <label
+            ref={dropRef}
+            className={`border-2 border-dashed ${
+              isDragging
+                ? "border-blue-500 bg-[rgba(0,0,255,0.05)]"
+                : "border-blue-300 bg-[rgba(0,0,0,0.2)]"
+            } rounded-lg text-gray-300 cursor-pointer hover:text-blue-300 hover:border-blue-500 flex flex-col items-center justify-center p-8 transition-all duration-200`}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <FiUpload className="text-4xl text-blue-400 mb-3" />
             <span className="font-medium">이미지 업로드</span>
             <span className="text-xs text-gray-500 mt-1">
               JPG, PNG (10MB 이하)
+            </span>
+            <span className="text-xs text-gray-400 mt-1">
+              파일을 드래그하여 놓거나 클릭하세요
             </span>
             <input
               type="file"

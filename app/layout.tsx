@@ -6,6 +6,7 @@ import Footer from "../components/layout/Footer";
 import { Noto_Sans_KR } from "next/font/google";
 import ApolloWrapper from "@/lib/ApolloWrapper";
 import dynamic from "next/dynamic";
+import { Toaster } from "react-hot-toast";
 
 const ClientProviders = dynamic(() => import("@/lib/reduxClient"), {
   ssr: false,
@@ -48,6 +49,7 @@ export default async function RootLayout({
                 <Footer />
               </div>
             </div>
+            <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
           </ApolloWrapper>
         </ClientProviders>
       </body>

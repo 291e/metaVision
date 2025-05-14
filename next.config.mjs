@@ -37,6 +37,10 @@ const nextConfig = {
         destination:
           "http://ec2-43-200-145-70.ap-northeast-2.compute.amazonaws.com:5100/queue_status",
       },
+      {
+        source: "/api/graphql",
+        destination: "http://192.168.0.202:4000/graphql",
+      },
     ];
   },
   async headers() {

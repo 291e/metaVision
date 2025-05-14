@@ -20,12 +20,6 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
-export type AddCreditsResponse = {
-  __typename?: 'AddCreditsResponse';
-  message: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-};
-
 export type Adjustment = {
   __typename?: 'Adjustment';
   id: Scalars['String']['output'];
@@ -67,15 +61,12 @@ export type Credit = {
   __typename?: 'Credit';
   amount: Scalars['Int']['output'];
   createdAt: Scalars['String']['output'];
+  currentBalance: Scalars['Int']['output'];
   description: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
+  id: Scalars['String']['output'];
   type: Scalars['String']['output'];
+  user: User;
   userId: Scalars['String']['output'];
-};
-
-export type CreditBalance = {
-  __typename?: 'CreditBalance';
-  credits: Scalars['Int']['output'];
 };
 
 export type EditProfileResult = {
@@ -98,9 +89,17 @@ export type LoginResult = {
   token?: Maybe<Scalars['String']['output']>;
 };
 
+export type MakePaymentResponse = {
+  __typename?: 'MakePaymentResponse';
+  credit?: Maybe<Credit>;
+  message?: Maybe<Scalars['String']['output']>;
+  payment?: Maybe<Payment>;
+  remainingBalance?: Maybe<Scalars['Int']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
-  addCredits: AddCreditsResponse;
   createAccount: MutationResponse;
   deleteAccount: MutationResponse;
   deleteAsset?: Maybe<Scalars['Boolean']['output']>;
@@ -109,15 +108,10 @@ export type Mutation = {
   editProduct: MutationResponse;
   editProfile: MutationResponse;
   login: LoginMutationResponse;
+  makePayment: MakePaymentResponse;
   resetPassword: ResetPasswordResult;
   uploadProduct: UploadProductResult;
-  useCredits: UseCreditsResponse;
-};
-
-
-export type MutationAddCreditsArgs = {
-  amount: Scalars['Int']['input'];
-  description: Scalars['String']['input'];
+  useCredit: UseCreditResponse;
 };
 
 
@@ -167,6 +161,13 @@ export type MutationLoginArgs = {
 };
 
 
+export type MutationMakePaymentArgs = {
+  amount: Scalars['Int']['input'];
+  orderId: Scalars['String']['input'];
+  paymentKey: Scalars['String']['input'];
+};
+
+
 export type MutationResetPasswordArgs = {
   email: Scalars['String']['input'];
 };
@@ -179,7 +180,7 @@ export type MutationUploadProductArgs = {
 };
 
 
-export type MutationUseCreditsArgs = {
+export type MutationUseCreditArgs = {
   amount: Scalars['Int']['input'];
   description: Scalars['String']['input'];
 };
@@ -188,6 +189,19 @@ export type MutationResponse = {
   __typename?: 'MutationResponse';
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type Payment = {
+  __typename?: 'Payment';
+  amount: Scalars['Int']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  orderId: Scalars['String']['output'];
+  paymentKey: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  user: User;
+  userId: Scalars['String']['output'];
 };
 
 export type Product = {
@@ -220,10 +234,11 @@ export type Query = {
   allProduct?: Maybe<Array<Maybe<Product>>>;
   assetDetail?: Maybe<Asset>;
   getAllUsers?: Maybe<Array<Maybe<User>>>;
-  getCreditBalance: CreditBalance;
+  getCredit?: Maybe<Array<Maybe<Credit>>>;
   getMyAsset?: Maybe<Array<Maybe<Asset>>>;
   getMyInfo?: Maybe<User>;
   getMyProduct?: Maybe<Array<Maybe<Product>>>;
+  getPayment?: Maybe<Array<Maybe<Payment>>>;
   productDetail?: Maybe<Product>;
 };
 
@@ -248,12 +263,22 @@ export type QueryGetAllUsersArgs = {
 };
 
 
+export type QueryGetCreditArgs = {
+  offset: Scalars['Int']['input'];
+};
+
+
 export type QueryGetMyAssetArgs = {
   offset: Scalars['Int']['input'];
 };
 
 
 export type QueryGetMyProductArgs = {
+  offset: Scalars['Int']['input'];
+};
+
+
+export type QueryGetPaymentArgs = {
   offset: Scalars['Int']['input'];
 };
 
@@ -285,15 +310,18 @@ export type UploadProductResult = {
   title?: Maybe<Scalars['String']['output']>;
 };
 
-export type UseCreditsResponse = {
-  __typename?: 'UseCreditsResponse';
-  message: Scalars['String']['output'];
+export type UseCreditResponse = {
+  __typename?: 'UseCreditResponse';
+  credit?: Maybe<Credit>;
+  message?: Maybe<Scalars['String']['output']>;
+  remainingBalance?: Maybe<Scalars['Int']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
 export type User = {
   __typename?: 'User';
   createdAt: Scalars['String']['output'];
+  creditHistory?: Maybe<Array<Maybe<Credit>>>;
   credits: Scalars['Int']['output'];
   email: Scalars['String']['output'];
   freeCoupon: Scalars['Int']['output'];
@@ -301,6 +329,7 @@ export type User = {
   isAdmin: Scalars['Boolean']['output'];
   isSubscribed: Scalars['Boolean']['output'];
   password: Scalars['String']['output'];
+  payments?: Maybe<Array<Maybe<Payment>>>;
   product?: Maybe<Array<Maybe<Product>>>;
   updatedAt: Scalars['String']['output'];
 };
@@ -423,12 +452,6 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
-export type AddCreditsResponse = {
-  __typename?: 'AddCreditsResponse';
-  message: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-};
-
 export type Adjustment = {
   __typename?: 'Adjustment';
   id: Scalars['String']['output'];
@@ -470,15 +493,12 @@ export type Credit = {
   __typename?: 'Credit';
   amount: Scalars['Int']['output'];
   createdAt: Scalars['String']['output'];
+  currentBalance: Scalars['Int']['output'];
   description: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
+  id: Scalars['String']['output'];
   type: Scalars['String']['output'];
+  user: User;
   userId: Scalars['String']['output'];
-};
-
-export type CreditBalance = {
-  __typename?: 'CreditBalance';
-  credits: Scalars['Int']['output'];
 };
 
 export type EditProfileResult = {
@@ -501,9 +521,17 @@ export type LoginResult = {
   token?: Maybe<Scalars['String']['output']>;
 };
 
+export type MakePaymentResponse = {
+  __typename?: 'MakePaymentResponse';
+  credit?: Maybe<Credit>;
+  message?: Maybe<Scalars['String']['output']>;
+  payment?: Maybe<Payment>;
+  remainingBalance?: Maybe<Scalars['Int']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
-  addCredits: AddCreditsResponse;
   createAccount: MutationResponse;
   deleteAccount: MutationResponse;
   deleteAsset?: Maybe<Scalars['Boolean']['output']>;
@@ -512,15 +540,10 @@ export type Mutation = {
   editProduct: MutationResponse;
   editProfile: MutationResponse;
   login: LoginMutationResponse;
+  makePayment: MakePaymentResponse;
   resetPassword: ResetPasswordResult;
   uploadProduct: UploadProductResult;
-  useCredits: UseCreditsResponse;
-};
-
-
-export type MutationAddCreditsArgs = {
-  amount: Scalars['Int']['input'];
-  description: Scalars['String']['input'];
+  useCredit: UseCreditResponse;
 };
 
 
@@ -570,6 +593,13 @@ export type MutationLoginArgs = {
 };
 
 
+export type MutationMakePaymentArgs = {
+  amount: Scalars['Int']['input'];
+  orderId: Scalars['String']['input'];
+  paymentKey: Scalars['String']['input'];
+};
+
+
 export type MutationResetPasswordArgs = {
   email: Scalars['String']['input'];
 };
@@ -582,7 +612,7 @@ export type MutationUploadProductArgs = {
 };
 
 
-export type MutationUseCreditsArgs = {
+export type MutationUseCreditArgs = {
   amount: Scalars['Int']['input'];
   description: Scalars['String']['input'];
 };
@@ -591,6 +621,19 @@ export type MutationResponse = {
   __typename?: 'MutationResponse';
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type Payment = {
+  __typename?: 'Payment';
+  amount: Scalars['Int']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  orderId: Scalars['String']['output'];
+  paymentKey: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  user: User;
+  userId: Scalars['String']['output'];
 };
 
 export type Product = {
@@ -623,10 +666,11 @@ export type Query = {
   allProduct?: Maybe<Array<Maybe<Product>>>;
   assetDetail?: Maybe<Asset>;
   getAllUsers?: Maybe<Array<Maybe<User>>>;
-  getCreditBalance: CreditBalance;
+  getCredit?: Maybe<Array<Maybe<Credit>>>;
   getMyAsset?: Maybe<Array<Maybe<Asset>>>;
   getMyInfo?: Maybe<User>;
   getMyProduct?: Maybe<Array<Maybe<Product>>>;
+  getPayment?: Maybe<Array<Maybe<Payment>>>;
   productDetail?: Maybe<Product>;
 };
 
@@ -651,12 +695,22 @@ export type QueryGetAllUsersArgs = {
 };
 
 
+export type QueryGetCreditArgs = {
+  offset: Scalars['Int']['input'];
+};
+
+
 export type QueryGetMyAssetArgs = {
   offset: Scalars['Int']['input'];
 };
 
 
 export type QueryGetMyProductArgs = {
+  offset: Scalars['Int']['input'];
+};
+
+
+export type QueryGetPaymentArgs = {
   offset: Scalars['Int']['input'];
 };
 
@@ -688,15 +742,18 @@ export type UploadProductResult = {
   title?: Maybe<Scalars['String']['output']>;
 };
 
-export type UseCreditsResponse = {
-  __typename?: 'UseCreditsResponse';
-  message: Scalars['String']['output'];
+export type UseCreditResponse = {
+  __typename?: 'UseCreditResponse';
+  credit?: Maybe<Credit>;
+  message?: Maybe<Scalars['String']['output']>;
+  remainingBalance?: Maybe<Scalars['Int']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
 export type User = {
   __typename?: 'User';
   createdAt: Scalars['String']['output'];
+  creditHistory?: Maybe<Array<Maybe<Credit>>>;
   credits: Scalars['Int']['output'];
   email: Scalars['String']['output'];
   freeCoupon: Scalars['Int']['output'];
@@ -704,6 +761,7 @@ export type User = {
   isAdmin: Scalars['Boolean']['output'];
   isSubscribed: Scalars['Boolean']['output'];
   password: Scalars['String']['output'];
+  payments?: Maybe<Array<Maybe<Payment>>>;
   product?: Maybe<Array<Maybe<Product>>>;
   updatedAt: Scalars['String']['output'];
 };

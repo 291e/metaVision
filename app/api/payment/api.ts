@@ -1,65 +1,87 @@
-import useUser from "@/app/hooks/useUser";
+// src/graphql/payments.ts
+import { gql } from "@apollo/client";
 
-const API_BASE_URL = "http://192.168.0.202:4000";
+// 결제 처리 (makePayment)
+export const MAKE_PAYMENT = gql`
+  mutation makePayment($paymentKey: String!, $orderId: String!, $amount: Int!) {
+    makePayment(paymentKey: $paymentKey, orderId: $orderId, amount: $amount) {
+      success
+      message
+      payment {
+        id
+        amount
+        status
+        paymentKey
+        orderId
+        createdAt
+        updatedAt
+      }
+      credit {
+        id
+        amount
+        type
+        description
+        currentBalance
+        createdAt
+      }
+      remainingBalance
+    }
+  }
+`;
 
-// 1. 결제 확인 및 크레딧 변환
-export const confirmPayment = async (
-  data: {
-    paymentKey: string;
-    orderId: string;
-    amount: number;
-  },
-  token: string
-) => {
-  console.log("API 요청 데이터:", data);
+// 결제 내역 조회 (getPayment)
+export const GET_PAYMENT = gql`
+  query getPayment {
+    getPayment {
+      success
+      message
+      payments {
+        id
+        amount
+        status
+        paymentKey
+        orderId
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
 
-  const response = await fetch(`${API_BASE_URL}/api/payments/confirm`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      token,
-    },
-    body: JSON.stringify(data),
-  });
+// 크레딧 사용 (useCredit)
+export const USE_CREDIT = gql`
+  mutation useCredit($amount: Int!, $description: String!) {
+    useCredit(amount: $amount, description: $description) {
+      success
+      message
+      credit {
+        id
+        amount
+        type
+        description
+        currentBalance
+        createdAt
+      }
+      remainingBalance
+    }
+  }
+`;
 
-  const responseData = await response.json();
-  console.log("API 응답:", responseData);
-  return responseData;
-};
-
-// 2. 결제 내역 조회
-export const getPaymentHistory = async (token: string) => {
-  const response = await fetch(`${API_BASE_URL}/api/payments/history`, {
-    headers: {
-      token,
-    },
-  });
-  return response.json();
-};
-
-// 3. 크레딧 사용
-export const useCredits = async (
-  amount: number,
-  description: string,
-  token: string
-) => {
-  const response = await fetch(`${API_BASE_URL}/api/payments/credits/use`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      token,
-    },
-    body: JSON.stringify({ amount, description }),
-  });
-  return response.json();
-};
-
-// 4. 크레딧 잔액 조회
-export const getCreditBalance = async (token: string) => {
-  const response = await fetch(`${API_BASE_URL}/api/payments/credits/balance`, {
-    headers: {
-      token,
-    },
-  });
-  return response.json();
-};
+// 크레딧 조회 (getCredit)
+export const GET_CREDIT = gql`
+  query getCredit {
+    getCredit {
+      success
+      message
+      balance
+      history {
+        id
+        amount
+        type
+        description
+        currentBalance
+        createdAt
+      }
+    }
+  }
+`;

@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# MetaVision
 
-## Getting Started
+MetaVision은 Next.js 기반의 현대적인 웹 애플리케이션입니다. 3D 시각화와 결제 시스템을 통합한 풀스택 프로젝트입니다.
 
-First, run the development server:
+## 기술 스택
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 프론트엔드
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **프레임워크**: Next.js 14.2.4
+- **언어**: TypeScript
+- **상태 관리**: Redux Toolkit, Redux Persist
+- **스타일링**: Tailwind CSS, DaisyUI
+- **3D 렌더링**: Three.js, React Three Fiber
+- **폼 관리**: React Hook Form, Zod
+- **UI 컴포넌트**: Heroicons, React Icons, Swiper
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 백엔드
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+- **API**: GraphQL (Apollo Server)
+- **데이터베이스**: Prisma ORM
+- **인증**: JWT, bcrypt
+- **파일 스토리지**: AWS S3
+- **결제 시스템**: Toss Payments
+- **메시징**: Twilio
 
-## Learn More
+### 개발 도구
 
-To learn more about Next.js, take a look at the following resources:
+- **코드 생성**: GraphQL Code Generator
+- **린팅**: ESLint
+- **타입 체크**: TypeScript
+- **빌드 도구**: Next.js
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 주요 기능
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- 3D 시각화 및 인터랙션
+- 사용자 인증 및 권한 관리
+- 파일 업로드 및 관리
+- 결제 시스템 통합
+- 실시간 메시징
+- 반응형 디자인

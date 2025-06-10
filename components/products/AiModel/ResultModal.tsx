@@ -83,22 +83,18 @@ export default function ResultModal({
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [rotationSpeed, setRotationSpeed] = useState(0.005);
+  const rotationSpeedRef = useRef(rotationSpeed);
   const [error, setError] = useState<string | null>(null);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
 
+  useEffect(() => {
+    rotationSpeedRef.current = rotationSpeed;
+  }, [rotationSpeed]);
+
   // 회전 속도 설정 (토글)
   const toggleRotation = () => {
-    if (
-      !window.confirm(
-        rotationSpeed > 0
-          ? "모델 회전을 중지하시겠습니까?"
-          : "모델 회전을 시작하시겠습니까?"
-      )
-    ) {
-      return;
-    }
     setRotationSpeed((prev) => (prev > 0 ? 0 : 0.01));
   };
 
@@ -306,8 +302,6 @@ export default function ResultModal({
       controls.dampingFactor = 0.05;
       controls.rotateSpeed = 0.8;
       controls.update();
-
-      console.log("🔍 모델 로드 시작:", blobUrl);
 
       // GLTFLoader로 모델 로드
       const loader = new GLTFLoader();
@@ -556,8 +550,8 @@ export default function ResultModal({
         animationFrameIdRef.current = requestAnimationFrame(animate);
 
         // 자동 회전 - 모델 존재 체크 추가
-        if (modelRef.current && rotationSpeed > 0) {
-          modelRef.current.rotation.y += rotationSpeed;
+        if (modelRef.current && rotationSpeedRef.current > 0) {
+          modelRef.current.rotation.y += rotationSpeedRef.current;
         }
 
         // 컨트롤 업데이트
@@ -587,7 +581,7 @@ export default function ResultModal({
       }
       cleanupResources();
     };
-  }, [isReady, blobUrl, rotationSpeed]);
+  }, [isReady, blobUrl]);
 
   // ESC 키 눌렀을 때 모달 닫기
   useEffect(() => {

@@ -158,7 +158,6 @@ const ProductGrid: React.FC = () => {
 
   // S3 모델 클릭 핸들러
   const handleModelClick = (model: S3Model) => {
-    console.log("S3 모델 열기:", model);
     setSelectedModel(model);
     setShowModal(true);
   };

@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ObjectCannedACL, S3Client } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
 import { useMutation } from "@apollo/client";
 import useUser from "@/app/hooks/useUser";
 import { UPLOAD_PRODUCT_MUTATION } from "@/app/api/product/mutation";
@@ -11,44 +9,42 @@ import { FaFolderOpen } from "react-icons/fa";
 import { AiFillPicture } from "react-icons/ai";
 import { FiUpload, FiRefreshCw, FiX, FiImage, FiCheck } from "react-icons/fi";
 import { MdError } from "react-icons/md";
-
-// S3 클라이언트 생성 (주의: 클라이언트에서 secret key 사용은 개발/테스트 환경에서만 사용)
-const s3Client = new S3Client({
-  region: process.env.NEXT_PUBLIC_AWS_S3_REGION,
-  credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_LOCAL_KEY!,
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_LOCAL_SECRET_KEY!,
-  },
-});
+import axios from "axios";
 
 const uploadFileToS3 = async (
   file: File,
   fileName: string,
   onProgress: (progress: number) => void
 ): Promise<string> => {
-  const upload = new Upload({
-    client: s3Client,
-    params: {
-      Bucket: process.env.NEXT_PUBLIC_AWS_S3_BUCKET!,
-      Key: fileName,
-      Body: file,
-      ACL:
-        (process.env.NEXT_PUBLIC_AWS_S3_PERMISSION as ObjectCannedACL) ||
-        undefined,
-      ContentType: file.type,
-    },
-    queueSize: 4,
-    partSize: 5 * 1024 * 1024, // 5MB
-    leavePartsOnError: false,
-  });
-  upload.on("httpUploadProgress", (progress) => {
-    if (progress.total) {
-      const percentage = (progress.loaded! / progress.total) * 100;
-      onProgress(percentage);
-    }
-  });
-  await upload.done();
-  return `https://${process.env.NEXT_PUBLIC_AWS_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_S3_REGION}.amazonaws.com/${fileName}`;
+  try {
+    // 1. API 라우트에 presigned URL 요청
+    const response = await axios.post("/api/presigned-url", {
+      fileName,
+      fileType: file.type,
+    });
+
+    const presignedUrl = response.data.url;
+
+    // 2. presigned URL을 사용하여 파일 직접 업로드
+    await axios.put(presignedUrl, file, {
+      headers: {
+        "Content-Type": file.type,
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentage = (progressEvent.loaded / progressEvent.total) * 100;
+          onProgress(percentage);
+        }
+      },
+    });
+
+    // 3. 파일의 공개 URL 반환 (presigned URL에서 쿼리 파라미터 제거)
+    const publicUrl = presignedUrl.split("?")[0];
+    return publicUrl;
+  } catch (error) {
+    console.error("파일 업로드 실패:", error);
+    throw error;
+  }
 };
 
 const PhotogrammetryUpload: React.FC = () => {

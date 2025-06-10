@@ -3,7 +3,7 @@
 import Image from "next/image";
 import meta360 from "@/public/main/metabank360.svg";
 import metabank from "@/public/main/main_metabank_white2.png";
-import metavision from "@/public/main/realmeta.svg";
+import metavision from "@/public/metavision.png";
 import Link from "next/link";
 import {
   Bars2Icon,

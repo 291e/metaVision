@@ -794,7 +794,6 @@ export default function PhotogrammetryViewer() {
         let responseText = "";
         try {
           responseText = await response.text();
-          console.log("응답 원본 텍스트:", responseText);
         } catch (textError) {
           console.error("응답 텍스트 추출 오류:", textError);
         }
@@ -803,7 +802,6 @@ export default function PhotogrammetryViewer() {
         let result;
         try {
           result = responseText ? JSON.parse(responseText) : {};
-          console.log("업로드 응답 JSON:", result);
         } catch (jsonError) {
           console.error("JSON 파싱 오류:", jsonError);
           throw new Error(`응답 파싱 오류: ${responseText || "응답 없음"}`);

@@ -2,8 +2,6 @@
 
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import back from "@/public/partner/partnerBack.png";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import useUser from "@/app/hooks/useUser";
 import { loadTossPayments } from "@tosspayments/payment-sdk";
@@ -17,23 +15,6 @@ interface CreditPackage {
   features: string[];
   isPopular?: boolean;
 }
-
-// 금액에 따른 크레딧 계산 함수
-const calculateCredits = (amount: number): number => {
-  switch (amount) {
-    case 10000:
-      return 100;
-    case 30000:
-      return 350;
-    case 50000:
-      return 650;
-    case 100000:
-      return 1500;
-    default:
-      // 정해진 금액이 아닌 경우 1000원당 10크레딧으로 계산
-      return Math.floor(amount / 100);
-  }
-};
 
 const creditPackages: CreditPackage[] = [
   {
@@ -119,6 +100,30 @@ export default function Pricing() {
   const { data: userData } = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 모바일 환경 체크
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
+  if (isMobile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">
+            모바일 환경에서는 이용할 수 없습니다
+          </h1>
+          <button
+            onClick={() => router.back()}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            이전 페이지로 돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handlePurchase = async (pkg: CreditPackage) => {
     if (!userData?.getMyInfo) {

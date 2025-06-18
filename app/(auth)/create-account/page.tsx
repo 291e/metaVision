@@ -14,20 +14,15 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
 type SignUpData = {
-  email?: string;
-  phone?: string;
+  email: string;
   password: string;
   passwordConfirm: string;
 };
 
 export default function SignUpPage() {
-  const [usePhone, setUsePhone] = useState(true);
   const [showPw, setShowPw] = useState(false);
   const [showPwConfirm, setShowPwConfirm] = useState(false);
   const router = useRouter();
-
-  const setEmailClick = () => setUsePhone(false);
-  const setPhoneClick = () => setUsePhone(true);
 
   const {
     register,
@@ -52,8 +47,8 @@ export default function SignUpPage() {
     }
 
     const variables = {
-      email: usePhone ? "" : (data.email as string),
-      phone: usePhone ? (data.phone as string) : "",
+      email: data.email,
+      phone: "",
       password: data.password,
     };
 
@@ -88,44 +83,15 @@ export default function SignUpPage() {
 
       <form onSubmit={handleSubmit(onValid)} className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
-          <div className="grid w-full grid-cols-2 ">
-            <button
-              type="button"
-              className={`pb-4 border-b-2 font-semibold ${
-                usePhone
-                  ? "border-meta text-meta"
-                  : "border-neutral-300 text-neutral-300"
-              }`}
-              onClick={setPhoneClick}
-            >
-              Phone
-            </button>
-            <button
-              type="button"
-              className={`pb-4 border-b-2 font-semibold ${
-                !usePhone
-                  ? "border-meta text-meta"
-                  : "border-neutral-300 text-neutral-300"
-              }`}
-              onClick={setEmailClick}
-            >
-              Email
-            </button>
-          </div>
           <input
-            type={usePhone ? "tel" : "email"}
-            placeholder={
-              usePhone ? "휴대폰번호를 입력해주세요" : "이메일을 입력해주세요"
-            }
-            {...register(usePhone ? "phone" : "email", {
+            type="email"
+            placeholder="이메일을 입력해주세요"
+            {...register("email", {
               required: "필수 입력 항목입니다",
             })}
-            onFocus={() => clearSignUpError(usePhone ? "phone" : "email")}
+            onFocus={() => clearSignUpError("email")}
             className="input-meta"
           />
-          {errors.phone && (
-            <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
-          )}
           {errors.email && (
             <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
           )}

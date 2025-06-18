@@ -75,7 +75,7 @@ export default function Header() {
   }, [menuOpen]);
 
   // /admin 경로일 경우 빈 div 반환
-  if (pathname.startsWith("/admin")) {
+  if (pathname?.startsWith("/admin")) {
     return <div></div>;
   }
 
@@ -103,9 +103,9 @@ export default function Header() {
           <Link className="hover:text-neutral-400" href="/help">
             <span>help</span>
           </Link>
-          <Link className="hover:text-neutral-400" href="/partner">
-            <span>partner</span>
-          </Link>
+          {/* <Link className="hover:text-neutral-400" href="/partner">
+                <span>partner</span>
+              </Link> */}
 
           <div className="flex items-center gap-10 max-lg:gap-4">
             <Link
@@ -225,7 +225,8 @@ export default function Header() {
                       solution
                     </Link>
                   </li>
-                  <li>
+                  {/* pricing은 모바일에서 숨김 */}
+                  {/* <li>
                     <Link
                       className="px-4 py-2 flex hover:text-neutral-900 hover:bg-gray-200 rounded"
                       href="/pricing"
@@ -233,7 +234,7 @@ export default function Header() {
                     >
                       pricing
                     </Link>
-                  </li>
+                  </li> */}
                   <li>
                     <Link
                       className="px-4 py-2 flex hover:text-neutral-900 hover:bg-gray-200 rounded"
@@ -243,15 +244,7 @@ export default function Header() {
                       help
                     </Link>
                   </li>
-                  <li>
-                    <Link
-                      className="px-4 py-2 flex hover:text-neutral-900 hover:bg-gray-200 rounded"
-                      href="/partner"
-                      onClick={handleMenuToggle}
-                    >
-                      partner
-                    </Link>
-                  </li>
+
                   {!isLoggedIn ? (
                     <li className="mt-4">
                       <button

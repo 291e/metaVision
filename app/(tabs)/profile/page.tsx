@@ -14,6 +14,8 @@ import {
 } from "@heroicons/react/24/solid";
 import { RootState } from "@/app/store/store";
 
+import DeleteAccountButton from "@/components/auth/DeleteAccountButton";
+
 export default function Profile() {
   const router = useRouter();
   const isLoggedIn = useSelector((state: RootState) => state.login.isLoggedIn); // Redux에서 로그인 상태 가져오기
@@ -83,6 +85,9 @@ export default function Profile() {
         <div className="mt-6 flex justify-center">
           <LogoutButton />
         </div>
+
+        {/* 계정 삭제 버튼 */}
+        <DeleteAccountButton />
       </div>
     </div>
   );

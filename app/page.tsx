@@ -14,13 +14,22 @@ import CloseOpen from "@/components/shared/closeOpen";
 import PhotogrammetryUpload from "@/components/products/PhotogrammetryUpload";
 import ProductTabs from "@/components/products/ProductTab";
 import PhotogrammetryViewer from "@/components/products/PhotogrammetryViewer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const Home: React.FC = () => {
   // 모바일에서 토글을 위한 상태
   const [activeComponent, setActiveComponent] = useState<"viewer" | "upload">(
     "viewer"
   );
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      )
+    );
+  }, []);
 
   return (
     <div className="pt-[80px] lg:pt-[94px] bg-white flex flex-col gap-10 text-black pb-20">
@@ -94,30 +103,33 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row items-center w-full justify-center gap-10 px-4">
-        <div className="px-4 py-5 max-xl:max-w-[400px] bg-gradient-to-r from-[#FEB6B2CC] to-[#FF4848CC] rounded-xl flex justify-center items-center shadow-md">
-          <Link
-            href="https://play.google.com/store/apps/details?id=com.metabank.meta360&pli=1"
-            target="blink"
-            className="flex gap-4 items-center text-white text-base hover:text-neutral-300"
-          >
-            <Image src={google} alt="Google" width={0} height={0} />
-            <span>플레이스토어 메타비전</span>
-            <ArrowRightCircleIcon className="size-7" />
-          </Link>
+      {/* 앱 다운로드 버튼 영역 - 모바일에서는 숨김 */}
+      {!isMobile && (
+        <div className="hidden md:flex flex-col lg:flex-row items-center w-full justify-center gap-10 px-4">
+          <div className="px-4 py-5 max-xl:max-w-[400px] bg-gradient-to-r from-[#FEB6B2CC] to-[#FF4848CC] rounded-xl flex justify-center items-center shadow-md">
+            <Link
+              href="https://play.google.com/store/apps/details?id=com.metabank.meta360&pli=1"
+              target="blink"
+              className="flex gap-4 items-center text-white text-base hover:text-neutral-300"
+            >
+              <Image src={google} alt="Google" width={0} height={0} />
+              <span>플레이스토어 메타비전</span>
+              <ArrowRightCircleIcon className="size-7" />
+            </Link>
+          </div>
+          <div className="px-8 py-5 bg-gradient-to-r from-[#7ABFFFCC] to-[#1C84FFCC] rounded-xl flex justify-center items-center shadow-md">
+            <Link
+              href="https://apps.apple.com/us/app/meta360/id6502634260"
+              target="blink"
+              className="flex gap-4 items-center justify-between text-white text-base hover:text-neutral-300"
+            >
+              <Image src={app} alt="App" width={0} height={0} />
+              <span>앱스토어 메타비전</span>
+              <ArrowRightCircleIcon className="size-7" />
+            </Link>
+          </div>
         </div>
-        <div className="px-8 py-5 bg-gradient-to-r from-[#7ABFFFCC] to-[#1C84FFCC] rounded-xl flex justify-center items-center shadow-md">
-          <Link
-            href="https://apps.apple.com/us/app/meta360/id6502634260"
-            target="blink"
-            className="flex gap-4 items-center justify-between text-white text-base hover:text-neutral-300"
-          >
-            <Image src={app} alt="App" width={0} height={0} />
-            <span>앱스토어 메타비전</span>
-            <ArrowRightCircleIcon className="size-7" />
-          </Link>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

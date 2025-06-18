@@ -297,7 +297,7 @@ export default function Solution() {
               데이터를 복원하고, 복원된 3D 데이터를 전 세계 사용자들이 무료 또는
               유료로 자유롭게 공유할 수 있는 3D 데이터 공유 플랫폼입니다.
             </span>
-            <button className="bg-meta btn-meta text-white p-2 rounded-lg lg:hidden">
+            <button className="hidden md:block bg-meta btn-meta text-white p-2 rounded-lg lg:hidden">
               지금 바로 시작하기
             </button>
 

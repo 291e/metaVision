@@ -22,7 +22,7 @@ export default function Footer() {
   };
 
   // /admin 경로일 경우 빈 div 반환
-  if (pathname.startsWith("/admin")) {
+  if (pathname?.startsWith("/admin")) {
     return <div></div>;
   }
 
@@ -34,7 +34,7 @@ export default function Footer() {
       </div>
       <div className="py-12">
         <div className="mx-auto">
-          <div className="*:text-neutral-800 flex justify-center gap-32 max-xl:gap-20 max-lg:gap-4 max-md:flex-col max-md:items-center">
+          <div className="*:text-neutral-800 md:flex justify-center gap-32 max-xl:gap-20 max-lg:gap-4 max-md:flex-col max-md:items-center hidden">
             <div className="max-md:flex max-md:justify-between max-md:w-full max-md:px-10 max-md:border-b-[1px] max-md:pb-4">
               <span className="font-semibold text-lg select-none">
                 (주)메타뱅크
@@ -45,22 +45,19 @@ export default function Footer() {
                 <li className="hover:text-black">
                   <Link
                     target="blink"
-                    href="https://metabank3d.com/theme/metabank/sub/info_01.php"
+                    href="https://www.metabank3d.com/metabank"
                   >
                     회사 소개
                   </Link>
                 </li>
                 <li className="hover:text-black">
-                  <Link
-                    href="https://metabank3d.com/theme/metabank/sub/info_04.php"
-                    target="blink"
-                  >
+                  <Link href="https://www.metabank3d.com/team" target="blink">
                     투자자 관계
                   </Link>
                 </li>
                 <li className="hover:text-black">
                   <Link
-                    href="https://metabank3d.com/theme/metabank/sub/info_03.php"
+                    href="https://www.metabank3d.com/technology"
                     target="blink"
                   >
                     사회적 영향
@@ -81,23 +78,20 @@ export default function Footer() {
                 >
                   <li className="hover:text-black">
                     <Link
-                      href="https://metabank3d.com/theme/metabank/sub/info_01.php"
+                      href="https://www.metabank3d.com/metabank"
                       target="blink"
                     >
                       회사 소개
                     </Link>
                   </li>
                   <li className="hover:text-black">
-                    <Link
-                      href="https://metabank3d.com/theme/metabank/sub/info_04.php"
-                      target="blink"
-                    >
+                    <Link href="https://www.metabank3d.com/team" target="blink">
                       투자자 관계
                     </Link>
                   </li>
                   <li className="hover:text-black">
                     <Link
-                      href="https://metabank3d.com/theme/metabank/sub/info_03.php"
+                      href="https://www.metabank3d.com/technology"
                       target="blink"
                     >
                       사회적 영향
@@ -152,17 +146,14 @@ export default function Footer() {
               <ul className="flex flex-col gap-1.5 mt-6 text-neutral-500 transition-colors max-md:hidden">
                 <li className="hover:text-black">
                   <Link
-                    href="https://metabank3d.com/theme/metabank/sub/business_02.php"
+                    href="https://www.metabank3d.com/shopping-retail"
                     target="blink"
                   >
                     메타버스 쇼핑몰
                   </Link>
                 </li>
                 <li className="hover:text-black">
-                  <Link
-                    href="https://metabank3d.com/theme/metabank/sub/business_03.php"
-                    target="blink"
-                  >
+                  <Link href="https://www.metabank3d.com/museum" target="blink">
                     메타버스 박물관
                   </Link>
                 </li>
@@ -181,7 +172,7 @@ export default function Footer() {
                 >
                   <li className="hover:text-black">
                     <Link
-                      href="https://metabank3d.com/theme/metabank/sub/business_02.php"
+                      href="https://www.metabank3d.com/shopping-retail"
                       target="blink"
                     >
                       메타버스 쇼핑몰
@@ -205,23 +196,20 @@ export default function Footer() {
               <ul className="flex flex-col gap-1.5 mt-6 text-neutral-500 transition-colors max-md:hidden">
                 <li className="hover:text-black">
                   <Link
-                    href="https://metabank3d.com/theme/metabank/sub/service_01.php"
+                    href="https://www.metabank3d.com/shopping-retail"
                     target="blink"
                   >
                     쇼핑/ 소매업
                   </Link>
                 </li>
                 <li className="hover:text-black">
-                  <Link
-                    href="https://metabank3d.com/theme/metabank/sub/service_02.php"
-                    target="blink"
-                  >
+                  <Link href="https://www.metabank3d.com/museum" target="blink">
                     박물관/ 전시장
                   </Link>
                 </li>
                 <li className="hover:text-black">
                   <Link
-                    href="https://metabank3d.com/theme/metabank/sub/service_03.php"
+                    href="https://www.metabank3d.com/real-estate"
                     target="blink"
                   >
                     부동산
@@ -229,7 +217,7 @@ export default function Footer() {
                 </li>
                 <li className="hover:text-black">
                   <Link
-                    href="https://metabank3d.com/theme/metabank/sub/service_04.php"
+                    href="https://www.metabank3d.com/architecture-construction-engineering"
                     target="blink"
                   >
                     건축, 건설, 엔지니어링
@@ -237,23 +225,20 @@ export default function Footer() {
                 </li>
                 <li className="hover:text-black">
                   <Link
-                    href="https://metabank3d.com/theme/metabank/sub/service_05.php"
+                    href="https://www.metabank3d.com/insurance"
                     target="blink"
                   >
                     보험
                   </Link>
                 </li>
                 <li className="hover:text-black">
-                  <Link
-                    href="https://metabank3d.com/theme/metabank/sub/service_06.php"
-                    target="blink"
-                  >
+                  <Link href="https://www.metabank3d.com/gis" target="blink">
                     GIS
                   </Link>
                 </li>
                 <li className="hover:text-black">
                   <Link
-                    href="https://metabank3d.com/theme/metabank/sub/service_07.php"
+                    href="https://www.metabank3d.com/facility-management"
                     target="blink"
                   >
                     시설관리
@@ -274,7 +259,7 @@ export default function Footer() {
                 >
                   <li className="hover:text-black">
                     <Link
-                      href="https://metabank3d.com/theme/metabank/sub/service_01.php"
+                      href="https://www.metabank3d.com/shopping-retail"
                       target="blink"
                     >
                       쇼핑/ 소매업
@@ -282,7 +267,7 @@ export default function Footer() {
                   </li>
                   <li className="hover:text-black">
                     <Link
-                      href="https://metabank3d.com/theme/metabank/sub/service_02.php"
+                      href="https://www.metabank3d.com/museum"
                       target="blink"
                     >
                       박물관/ 전시장
@@ -290,7 +275,7 @@ export default function Footer() {
                   </li>
                   <li className="hover:text-black">
                     <Link
-                      href="https://metabank3d.com/theme/metabank/sub/service_03.php"
+                      href="https://www.metabank3d.com/real-estate"
                       target="blink"
                     >
                       부동산
@@ -298,7 +283,7 @@ export default function Footer() {
                   </li>
                   <li className="hover:text-black">
                     <Link
-                      href="https://metabank3d.com/theme/metabank/sub/service_04.php"
+                      href="https://www.metabank3d.com/architecture-construction-engineering"
                       target="blink"
                     >
                       건축, 건설, 엔지니어링
@@ -306,23 +291,20 @@ export default function Footer() {
                   </li>
                   <li className="hover:text-black">
                     <Link
-                      href="https://metabank3d.com/theme/metabank/sub/service_05.php"
+                      href="https://www.metabank3d.com/insurance"
                       target="blink"
                     >
                       보험
                     </Link>
                   </li>
                   <li className="hover:text-black">
-                    <Link
-                      href="https://metabank3d.com/theme/metabank/sub/service_06.php"
-                      target="blink"
-                    >
+                    <Link href="https://www.metabank3d.com/gis" target="blink">
                       GIS
                     </Link>
                   </li>
                   <li className="hover:text-black">
                     <Link
-                      href="https://metabank3d.com/theme/metabank/sub/service_07.php"
+                      href="https://www.metabank3d.com/facility-management"
                       target="blink"
                     >
                       시설관리
@@ -370,7 +352,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="lg:hidden flex justify-center gap-6 *:size-7 pb-12">
+      <div className="hidden md:flex justify-center gap-6 *:size-7 pb-12">
         <FaFacebookF />
         <FaXTwitter />
         <FaInstagram />
@@ -381,9 +363,8 @@ export default function Footer() {
       <div className="py-6 bg-white flex justify-center items-center gap-20 max-md:gap-10 max-sm:gap-4 max-md:flex-col max-md:items-start max-md:pl-10 text-black ">
         <span>© 2023 metabank, Inc</span>
         <div className="gap-20 max-md:gap-10 max-sm:gap-4 flex max-md:text-neutral-400 max-md:underline-offset-2 max-md:underline">
-          <Link href="">이용약관</Link>
-          <Link href="">개인 정보 정책</Link>
-          <Link href="">쿠키 정책</Link>
+          <Link href="/agreement">이용약관</Link>
+          <Link href="/privacy">개인 정보 정책</Link>
         </div>
       </div>
     </div>
